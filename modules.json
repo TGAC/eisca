@@ -10,6 +10,21 @@
                         "git_sha": "285a50500f9e02578d90b3ce6382ea3c30216acd",
                         "installed_by": ["modules"]
                     },
+                    "gunzip": {
+                        "branch": "master",
+                        "git_sha": "4e5f4687318f24ba944a13609d3ea6ebd890737d",
+                        "installed_by": ["modules"]
+                    },
+                    "kallistobustools/count": {
+                        "branch": "master",
+                        "git_sha": "53c2b466994f07def210b7f4cc866bb5a8a2cb92",
+                        "installed_by": ["modules"]
+                    },
+                    "kallistobustools/ref": {
+                        "branch": "master",
+                        "git_sha": "de8215983defba48cd81961d620a9e844f11c7e7",
+                        "installed_by": ["modules"]
+                    },
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "b7ebe95761cd389603f9cc0e0dc384c0f663815a",
