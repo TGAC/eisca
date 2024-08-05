@@ -10,6 +10,11 @@
                         "git_sha": "285a50500f9e02578d90b3ce6382ea3c30216acd",
                         "installed_by": ["modules"]
                     },
+                    "gffread": {
+                        "branch": "master",
+                        "git_sha": "6c996d7fbe0816dcbb68ce587ad5f873313682a1",
+                        "installed_by": ["modules"]
+                    },
                     "gunzip": {
                         "branch": "master",
                         "git_sha": "4e5f4687318f24ba944a13609d3ea6ebd890737d",

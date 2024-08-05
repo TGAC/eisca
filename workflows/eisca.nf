@@ -6,10 +6,22 @@
 
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
-include { paramsSummaryMap       } from 'plugin/nf-validation'
+//include { paramsSummaryMap       } from 'plugin/nf-validation'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_eisca_pipeline'
+
+
+include { KALLISTO_BUSTOOLS                  } from '../subworkflows/local/kallisto_bustools'
+include { SCRNASEQ_ALEVIN                    } from '../subworkflows/local/alevin'
+include { STARSOLO                           } from '../subworkflows/local/starsolo'
+//include { MTX_CONVERSION                     } from "../subworkflows/local/mtx_conversion"
+//include { GTF_GENE_FILTER                    } from '../modules/local/gtf_gene_filter'
+//include { EMPTYDROPS_CELL_CALLING            } from '../modules/local/emptydrops'
+include { GUNZIP as GUNZIP_FASTA             } from '../modules/nf-core/gunzip/main'
+include { GUNZIP as GUNZIP_GTF               } from '../modules/nf-core/gunzip/main'
+include { paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-validation'
+include { getGenomeAttribute                 } from '../subworkflows/local/utils_nfcore_scrnaseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
