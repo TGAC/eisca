@@ -292,5 +292,56 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "aligner": {
+            "type": "string",
+            "default": "alevin"
+        },
+        "transcript_fasta": {
+            "type": "string"
+        },
+        "txp2gene": {
+            "type": "string"
+        },
+        "simpleaf_rlen": {
+            "type": "integer",
+            "default": 91
+        },
+        "barcode_whitelist": {
+            "type": "string"
+        },
+        "salmon_index": {
+            "type": "string"
+        },
+        "kallisto_index": {
+            "type": "string"
+        },
+        "kb_workflow": {
+            "type": "string",
+            "default": "standard"
+        },
+        "kb_t1c": {
+            "type": "string"
+        },
+        "kb_t2c": {
+            "type": "string"
+        },
+        "kb_filter": {
+            "type": "boolean"
+        },
+        "star_index": {
+            "type": "string"
+        },
+        "star_ignore_sjdbgtf": {
+            "type": "string"
+        },
+        "seq_center": {
+            "type": "string"
+        },
+        "star_feature": {
+            "type": "string",
+            "default": "Gene"
+        }
+    }
 }
