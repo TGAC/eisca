@@ -82,6 +82,7 @@ workflow EISCA {
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
+    ch_mtx_matrices = Channel.empty()
 
     //
     // MODULE: Run FastQC
@@ -134,7 +135,7 @@ workflow EISCA {
             kb_t2c,
             protocol_config['protocol'],
             kb_workflow,
-            ch_fastq
+            ch_samplesheet
         )
         ch_versions = ch_versions.mix(KALLISTO_BUSTOOLS.out.ch_versions)
         ch_mtx_matrices = ch_mtx_matrices.mix(KALLISTO_BUSTOOLS.out.raw_counts, KALLISTO_BUSTOOLS.out.filtered_counts)
@@ -151,7 +152,7 @@ workflow EISCA {
             ch_txp2gene,
             ch_barcode_whitelist,
             protocol_config['protocol'],
-            ch_fastq
+            ch_samplesheet
         )
         ch_versions = ch_versions.mix(SCRNASEQ_ALEVIN.out.ch_versions)
         ch_multiqc_files = ch_multiqc_files.mix(SCRNASEQ_ALEVIN.out.alevin_results.map{ meta, it -> it })
@@ -166,7 +167,7 @@ workflow EISCA {
             ch_star_index,
             protocol_config['protocol'],
             ch_barcode_whitelist,
-            ch_fastq,
+            ch_samplesheet,
             star_feature,
             protocol_config.get('extra_args', ""),
         )
