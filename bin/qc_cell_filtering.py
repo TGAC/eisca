@@ -87,7 +87,13 @@ def main(argv=None):
         logger.error(f"The given input file {args.h5ad} was not found!")
         sys.exit(2)
 
-    util.check_and_create_folder(args.outdir)    
+    util.check_and_create_folder(args.outdir)
+    path_quant_qc_scatter = Path(args.outdir, 'quant_qc', 'scatter')
+    path_quant_qc_violin = Path(args.outdir, 'quant_qc', 'violin')
+    path_cell_filtering = Path(args.outdir, 'cell_filtering')
+    util.check_and_create_folder(path_quant_qc_scatter)
+    util.check_and_create_folder(path_quant_qc_violin)
+    util.check_and_create_folder(path_cell_filtering)
 
     adata = anndata.read_h5ad(args.h5ad)
     # import pdb; pdb.set_trace() #debug code
@@ -103,19 +109,29 @@ def main(argv=None):
         adata, qc_vars=["mt", "ribo", "hb"], inplace=True, log1p=True
     )
 
-    with plt.rc_context():
-        sc.pl.violin(
-            adata,
-            ["n_genes_by_counts", "total_counts", "pct_counts_mt"],
-            jitter=0.4,
-            multi_panel=True,
-            show=False
-        )
-        plt.savefig(Path(args.outdir, 'violin_total_counts_genes_mt.png'), bbox_inches="tight")
+    for sid in adata.obs['sample'].unique():
+        adata_s = adata[adata.obs['sample']==sid]
+        path_sample = Path(path_quant_qc_scatter, f"sample_{sid}")
+        util.check_and_create_folder(path_sample)
 
-    with plt.rc_context():
-        sc.pl.scatter(adata, "total_counts", "n_genes_by_counts", color="pct_counts_mt", show=False)
-        plt.savefig(Path(args.outdir, 'scatter_total_counts_genes.png'), bbox_inches="tight")
+        with plt.rc_context():
+            sc.pl.scatter(adata_s, "total_counts", "n_genes_by_counts", color="pct_counts_mt", show=False)
+            plt.savefig(Path(path_sample, 'scatter_total_counts_genes.png'), bbox_inches="tight")
+
+    for sid in adata.obs['sample'].unique():
+        adata_s = adata[adata.obs['sample']==sid]
+        path_sample = Path(path_quant_qc_violin, f"sample_{sid}")
+        util.check_and_create_folder(path_sample)
+        with plt.rc_context():
+            sc.pl.violin(
+                adata_s,
+                ["n_genes_by_counts", "total_counts", "pct_counts_mt"],
+                jitter=0.4,
+                multi_panel=True,
+                show=False
+            )
+            plt.savefig(Path(path_sample, 'violin_total_counts_genes_mt.png'), bbox_inches="tight")
+
 
     # Cell filtering
     sc.pp.filter_cells(adata, min_genes=args.min_genes)
@@ -138,7 +154,7 @@ def main(argv=None):
     sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
     with plt.rc_context():
         sc.pl.highly_variable_genes(adata, show=False)
-        plt.savefig(Path(args.outdir, 'highly_variable_genes.png'), bbox_inches="tight")
+        plt.savefig(Path(path_cell_filtering, 'highly_variable_genes.png'), bbox_inches="tight")
     sc.tl.pca(adata)
 
     # QC after cell filtering
@@ -152,27 +168,32 @@ def main(argv=None):
             size=2,
             show=False
         )
-        plt.savefig(Path(args.outdir, 'umap_samples.png'), bbox_inches="tight")
+        plt.savefig(Path(path_cell_filtering, 'umap_samples.png'), bbox_inches="tight")
 
-    # with plt.rc_context():
-    #     sc.pl.umap(
-    #         adata,
-    #         color=["predicted_doublet", "doublet_score"],
-    #         wspace=0.5, # increase horizontal space between panels
-    #         size=3,
-    #         show=False
-    #     )
-    #     plt.savefig(Path(args.outdir, 'umap_doublet.png'), bbox_inches="tight")
 
-    with plt.rc_context():
-        sc.pl.umap(
-            adata,
-            color=["log1p_total_counts", "pct_counts_mt", "log1p_n_genes_by_counts"],
-            wspace=0.5,
-            ncols=2,
-            show=False
-        )
-        plt.savefig(Path(args.outdir, 'umap_total_counts_genes_mt.png'), bbox_inches="tight")    
+    for sid in adata.obs['sample'].unique():
+        adata_s = adata[adata.obs['sample']==sid]   
+        path_cell_filtering_s = Path(path_cell_filtering, f"sample_{sid}")
+        util.check_and_create_folder(path_cell_filtering_s)
+        # with plt.rc_context():
+        #     sc.pl.umap(
+        #         adata_s,
+        #         color=["predicted_doublet", "doublet_score"],
+        #         wspace=0.5, # increase horizontal space between panels
+        #         size=3,
+        #         show=False
+        #     )
+        #     plt.savefig(Path(path_cell_filtering_s, 'umap_doublet.png'), bbox_inches="tight")
+
+        with plt.rc_context():
+            sc.pl.umap(
+                adata_s,
+                color=["log1p_total_counts", "pct_counts_mt", "log1p_n_genes_by_counts"],
+                wspace=0.5,
+                ncols=2,
+                show=False
+            )
+            plt.savefig(Path(path_cell_filtering_s, 'umap_total_counts_genes_mt.png'), bbox_inches="tight")    
 
 
 if __name__ == "__main__":
