@@ -2,12 +2,13 @@
 
 import dominate.tags as html
 import ezcharts as ezc
-from ezcharts.components.reports.labs import LabsReport
+from ezcharts.components.reports.labs import LabsReport, LabsAddendum
 from ezcharts.layout.snippets import DataTable, Grid, Tabs
 from ezcharts.components.theme import LAB_head_resources
 
 import argparse
 from pathlib import Path
+from report_util import *
 import util
 import json
 import pandas as pd
@@ -15,6 +16,9 @@ import sys
 
 
 logger = util.get_named_logger('Report')
+
+report_title = 'EI Single Cell Analysis Report'
+workflow_name = 'eisca'
 
 
 def parse_args(argv=None):
@@ -90,9 +94,14 @@ def main(argv=None):
         sys.exit(2)
 
     report = LabsReport(
-        'EI Single Cell Analysis Report', 'eisca',
+        report_title, workflow_name,
         args.params, args.versions, args.wf_version,
         head_resources=[*LAB_head_resources])
+    
+    report.banner.clear()
+    report.footer.clear()
+    report.intro_content.add(EIBanner(report_title, workflow_name))
+    report.footer.add(EILabsAddendum(workflow_name, args.wf_version))
 
     # samplesheet = pd.read_csv(args.samplesheet)
     # samples = samplesheet['sample'].unique()
@@ -105,19 +114,21 @@ def main(argv=None):
     if path_quant_qc.exists():
         with report.add_section('Quantification QC', 'quant_QC'):
             html.p("""This section shows the QC plots of counts from alignment and quantification steps.""")
-            util.plots_from_image_files(path_quant_qc_scatter, meta='sample')
-            util.plots_from_image_files(path_quant_qc_violin, meta='sample')
+            plots_from_image_files(path_quant_qc_scatter, meta='sample', widths=['800'])
+            plots_from_image_files(path_quant_qc_violin, meta='sample')
     else:
         logger.info('Skipping Quantification QC')
 
     if path_quant_qc.exists():
         with report.add_section('Cell filtering', 'cell_filtering'):
             html.p("""This section shows the QC plots after filtering cells.""")
-            util.plots_from_image_files(path_cell_filtering)            
-            util.plots_from_image_files(path_cell_filtering, meta='sample')            
+            plots_from_image_files(path_cell_filtering, widths=['800'])            
+            plots_from_image_files(path_cell_filtering, meta='sample')            
     else:
         logger.info('Skipping Cell filtering')
 
+    # html.script('document.getElementsByTagName("p")[0].innerHTML("test cool")')
+    # report.banner.getElementsByTagName('p')[0]
 
     report.write(args.report)
     logger.info('Report writing finished')

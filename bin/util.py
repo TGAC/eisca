@@ -3,9 +3,6 @@ import argparse
 import logging
 import os
 from pathlib import Path
-from ezcharts.layout.snippets import DataTable, Grid, Tabs
-from dominate.tags import figure, img
-import base64
 
 _log_name = None
 
@@ -90,33 +87,3 @@ def check_folder_for_files(folder_path):
 
 
 
-def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], width=['1200']):
-    """Create a plots section which uses image files.
-    PARAMS:
-        meta: can be sample or group, by which images are shown in tabs
-        ncol: the number of columns for Grid
-        suffix: list of suffix used to match the image files
-        width: the column withs of Grid columns
-    """
-    tabs = Tabs()
-
-    if meta in ['sample', 'group']:
-        for folder in [f for f in path.iterdir() if f.is_dir()]:
-            if folder.name.startswith(f'{meta}_'):
-                sample_id = folder.name.split('_', 1)[1]
-                with tabs.add_tab(sample_id):
-                    with Grid(columns=ncol):
-                        pathes = [next(folder.glob('*'+sf)) for sf in suffix]
-                        for img_path, width in zip(pathes, width):
-                            with open(img_path, 'rb') as fh:
-                                b64img = base64.b64encode(fh.read()).decode()
-                            with figure():
-                                img(src=f'data:image/png;base64,{b64img}', width=width)
-    else:
-        with Grid(columns=ncol):
-            pathes = [next(path.glob('*'+sf)) for sf in suffix]
-            for img_path, width in zip(pathes, width):
-                with open(img_path, 'rb') as fh:
-                    b64img = base64.b64encode(fh.read()).decode()
-                with figure():
-                    img(src=f'data:image/png;base64,{b64img}', width=width)        
