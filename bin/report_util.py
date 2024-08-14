@@ -3,11 +3,12 @@ from dominate.tags import div, h1, h4, p, code
 from dominate.tags import figure, img
 import base64
 from ezcharts.layout.snippets import DataTable, Grid, Tabs
-from ezcharts.layout.resource import (ImageResource, ScriptResource, StyleResource, ThemeResource)
+from ezcharts.layout.resource import (ImageResource, ScriptResource, StyleResource, ThemeResource, Resource)
 from ezcharts.layout.util import inline, load_json, transpile, cls, css
 from ezcharts.layout.base import IClasses, IStyles, Snippet
 from ezcharts.layout.snippets.banner import IBannerClasses, IBannerStyles, IBadgeClasses, IBadgeStyles, Badge
 from ezcharts.components.reports.labs import ILabsAddendumClasses
+from pathlib import Path
 
 
 
@@ -81,13 +82,13 @@ class EILabsAddendum(Snippet):
                 p(
                     "This report was produced using the ",
                     code(f"TGAC/{workflow_name}"),
-                    f" nextflow workflow ({workflow_version})."
+                    f" nextflow workflow (v{workflow_version})."
                 )
-                # p(
-                #     "Oxford Nanopore Technologies products are not "
-                #     "intended for use for health assessment or to "
-                #     "diagnose, treat, mitigate, cure or prevent any "
-                #     "disease or condition.")
+                p(
+                    "The analysis restuls are not "
+                    "intended for use for health assessment or to "
+                    "diagnose, treat, mitigate, cure or prevent any "
+                    "disease or condition.")
 
 
 
@@ -123,14 +124,17 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=['12
                         img(src=f'data:image/png;base64,{b64img}', width=width)        
 
 
-class EPI2MELabsLogo(div):
-    """Labs logo element."""
+class EILogo(div):
+    """EI logo element."""
 
     def __init__(self) -> None:
         """Create a div with an SVG logo inside."""
         super().__init__(
-            inline(ImageResource('LAB_logo.svg').data_file),
+            # inline(ImageResource('EI_logo.svg').data_file),
+            # inline(Resource(path='images/EI_logo.svg', loader=inline)),
+            inline(Path('images/EI_logo.svg')),
+            # inline(Path('/home/wuhh/nf-core-eisca/bin/images/EI_logo.svg')),
             tagname='div',
             style="width: 35px; height: 35px;",
             className="d-flex",
-            alt="EPI2ME Labs Logo")
+            alt="EI Logo")

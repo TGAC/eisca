@@ -2,7 +2,7 @@
 
 import dominate.tags as html
 import ezcharts as ezc
-from ezcharts.components.reports.labs import LabsReport, LabsAddendum
+from ezcharts.components.reports.labs import LabsReport, LabsNavigation, ILabsNavigationClasses
 from ezcharts.layout.snippets import DataTable, Grid, Tabs
 from ezcharts.components.theme import LAB_head_resources
 
@@ -96,8 +96,19 @@ def main(argv=None):
     report = LabsReport(
         report_title, workflow_name,
         args.params, args.versions, args.wf_version,
-        head_resources=[*LAB_head_resources])
+        head_resources=[*LAB_head_resources],
+    )
     
+    # report.nav = LabsNavigation(logo=EILogo, groups=['main', 'meta'])
+    report.nav.getElementsByTagName('a')[0].clear()
+    navdiv = report.nav.getElementsByTagName('div')[0]
+    link = html.a(href='https://www.earlham.ac.uk/', cls=ILabsNavigationClasses().logo)
+    with link:
+        with open(Path('images/EI_logo.png'), 'rb') as f:
+            b64img = base64.b64encode(f.read()).decode()
+            html.img(src=f'data:image/png;base64,{b64img}', width=120)
+    navdiv[0] = link
+
     report.banner.clear()
     report.footer.clear()
     report.intro_content.add(EIBanner(report_title, workflow_name))
