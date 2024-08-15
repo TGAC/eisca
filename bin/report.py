@@ -99,7 +99,6 @@ def main(argv=None):
         head_resources=[*LAB_head_resources],
     )
     
-    # report.nav = LabsNavigation(logo=EILogo, groups=['main', 'meta'])
     report.nav.getElementsByTagName('a')[0].clear()
     navdiv = report.nav.getElementsByTagName('div')[0]
     link = html.a(href='https://www.earlham.ac.uk/', cls=ILabsNavigationClasses().logo)

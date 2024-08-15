@@ -342,6 +342,19 @@
         "star_feature": {
             "type": "string",
             "default": "Gene"
+        },
+        "save_reference": {
+            "type": "boolean"
+        },
+        "protocol": {
+            "type": "string",
+            "default": "auto"
+        },
+        "skip_fastqc": {
+            "type": "boolean"
+        },
+        "gtf": {
+            "type": "string"
         }
     }
 }

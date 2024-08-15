@@ -6,7 +6,6 @@
 
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
-//include { paramsSummaryMap       } from 'plugin/nf-validation'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_eisca_pipeline'
@@ -15,7 +14,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_eisc
 include { KALLISTO_BUSTOOLS                  } from '../subworkflows/local/kallisto_bustools'
 include { SCRNASEQ_ALEVIN                    } from '../subworkflows/local/alevin'
 include { STARSOLO                           } from '../subworkflows/local/starsolo'
-//include { MTX_CONVERSION                     } from "../subworkflows/local/mtx_conversion"
+include { MTX_CONVERSION                     } from "../subworkflows/local/mtx_conversion"
 include { GTF_GENE_FILTER                    } from '../modules/local/gtf_gene_filter'
 //include { EMPTYDROPS_CELL_CALLING            } from '../modules/local/emptydrops'
 include { GUNZIP as GUNZIP_FASTA             } from '../modules/nf-core/gunzip/main'
@@ -58,19 +57,16 @@ workflow EISCA {
         ch_barcode_whitelist = []
     }
 
-    //kallisto params
-    ch_kallisto_index = params.kallisto_index ? file(params.kallisto_index) : []
-    kb_workflow = params.kb_workflow
-    kb_t1c = params.kb_t1c ? file(params.kb_t1c) : []
-    kb_t2c = params.kb_t2c ? file(params.kb_t2c) : []
 
     // samplesheet - this is passed to the MTX conversion functions to add metadata to the
     // AnnData objects.
     ch_input = file(params.input)
 
-    //kallisto params
+   //kallisto params
     ch_kallisto_index = params.kallisto_index ? file(params.kallisto_index) : []
     kb_workflow = params.kb_workflow
+    kb_t1c = params.kb_t1c ? file(params.kb_t1c) : []
+    kb_t2c = params.kb_t2c ? file(params.kb_t2c) : []
 
     //salmon params
     ch_salmon_index = params.salmon_index ? file(params.salmon_index) : []
@@ -124,6 +120,7 @@ workflow EISCA {
     // filter gtf
     ch_filter_gtf = ch_gtf ? GTF_GENE_FILTER ( ch_genome_fasta, ch_gtf ).gtf : []
 
+
     // Run kallisto bustools pipeline
     if (params.aligner == "kallisto") {
         KALLISTO_BUSTOOLS(
@@ -176,6 +173,18 @@ workflow EISCA {
         ch_star_index = STARSOLO.out.star_index
         ch_multiqc_files = ch_multiqc_files.mix(STARSOLO.out.for_multiqc)
     }
+
+
+    // Run mtx to h5ad conversion subworkflow
+    MTX_CONVERSION (
+        ch_mtx_matrices,
+        ch_input,
+        ch_txp2gene,
+        ch_star_index
+    )
+
+    //Add Versions from MTX Conversion workflow too
+    ch_versions.mix(MTX_CONVERSION.out.ch_versions)
 
 
     //
