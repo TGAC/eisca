@@ -120,6 +120,7 @@ def main(argv=None):
     path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
     path_quant_qc_violin = Path(path_quant_qc, 'violin')
     path_cell_filtering = Path(args.results, 'cell_filtering')
+    path_clustering_samples = Path(args.results, 'clustering')
 
     if path_quant_qc.exists():
         with report.add_section('Quantification QC', 'quant_QC'):
@@ -137,8 +138,17 @@ def main(argv=None):
     else:
         logger.info('Skipping Cell filtering')
 
-    # html.script('document.getElementsByTagName("p")[0].innerHTML("test cool")')
-    # report.banner.getElementsByTagName('p')[0]
+
+    if path_clustering_samples.exists():
+        with report.add_section('Clustering on samples', 'cell_filtering'):
+            html.p("""This section shows clustering UMAP plots for each sample. The clustering 
+                   was performed using Leiden graph-clustering method. The resolution parameter 
+                   was set foir different values to get different number of clusters which 
+                   could match to biologically-meaningful cell types.""")
+            plots_from_image_files(path_clustering_samples, meta='sample', widths=['1200'])            
+    else:
+        logger.info('Skipping Cell filtering')        
+
 
     report.write(args.report)
     logger.info('Report writing finished')

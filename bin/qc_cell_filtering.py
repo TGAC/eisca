@@ -7,10 +7,7 @@ from scipy import io
 import anndata
 from matplotlib import pyplot as plt
 import argparse
-import logging
 import sys
-import json
-import gzip
 from pathlib import Path
 import util
 # from .util import get_named_logger,
@@ -24,7 +21,6 @@ def parse_args(argv=None):
 
     parser = argparse.ArgumentParser(
         description="Quality control before and after cell filtering",
-        epilog="python count_reads_from_bam.py --bam file.bam --bed file.bed --json output.json",
     )
     parser.add_argument(
         "--h5ad",

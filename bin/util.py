@@ -86,4 +86,15 @@ def check_folder_for_files(folder_path):
         return False
 
 
-
+def floatlist(floatstr):
+    """A argparse type
+    PARAMS:
+        floatstr: a string of float numbers separated with ','
+    RETURN:
+        A list of float numbers
+    """
+    try:
+        floats = [float(x) for x in floatstr.split(',')]
+    except ValueError:
+        raise argparse.ArgumentTypeError('Invalid float number!')
+    return floats
