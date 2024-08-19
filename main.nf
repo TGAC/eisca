@@ -55,6 +55,16 @@ workflow NFCORE_EISCA {
         samplesheet
     )
 
+
+    if (analyses.contains('primary') || analyses.contains('secondary')){
+        def workflow_params = getParams()
+        MAKE_REPORT (
+            EISCA.out.versions,
+            // software_versions,
+            getParams(),
+        )        
+    }
+
     emit:
     multiqc_report = EISCA.out.multiqc_report // channel: /path/to/multiqc_report.html
 

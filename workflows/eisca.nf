@@ -23,6 +23,7 @@ include { paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-validation'
 include { getGenomeAttribute                 } from '../subworkflows/local/utils_nfcore_eisca_pipeline'
 
 include { QC_CELL_FILTER                    } from '../modules/local/qc_cell_filter'
+include { MAKE_REPORT                       } from '../modules/local/make_report'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,6 +196,8 @@ workflow EISCA {
     }
 
 
+
+
     //===================================== Primary anaysis stage =====================================
 
     if (analyses.contains('secondary')){
@@ -267,7 +270,25 @@ workflow EISCA {
     emit:
     multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
+
 }
+
+
+
+process getParams {
+    label "wfamplicon"
+    cpus 1
+    memory "2 GB"
+    output:
+        path "params.json"
+    script:
+    String paramsJSON = new JsonBuilder(params).toPrettyString()
+    """
+    # Output nextflow params object to JSON
+    echo '$paramsJSON' > params.json
+    """
+}
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
