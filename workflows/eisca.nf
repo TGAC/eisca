@@ -22,11 +22,14 @@ include { GUNZIP as GUNZIP_GTF               } from '../modules/nf-core/gunzip/m
 include { paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-validation'
 include { getGenomeAttribute                 } from '../subworkflows/local/utils_nfcore_eisca_pipeline'
 
+include { QC_CELL_FILTER                    } from '../modules/local/qc_cell_filter'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
 
 workflow EISCA {
 
@@ -34,6 +37,9 @@ workflow EISCA {
     ch_samplesheet // channel: samplesheet read in from --input
 
     main:
+
+    analyses = params.analyses.split(',').toList()
+    skip_analyses = params.skip? params.skip.split(',').toList() : []
 
     protocol_config = Utils.getProtocol(workflow, log, params.aligner, params.protocol)
     if (protocol_config['protocol'] == 'auto' && params.aligner !in ["cellranger", "cellrangerarc", "cellrangermulti"]) {
@@ -80,111 +86,132 @@ workflow EISCA {
     ch_multiqc_files = Channel.empty()
     ch_mtx_matrices = Channel.empty()
 
-    //
-    // MODULE: Run FastQC
-    //
+    
+    //===================================== Primary anaysis stage =====================================
 
-    if (!params.skip_fastqc) {
-        FASTQC (
-            ch_samplesheet
+    if (analyses.contains('primary')){
+    
+        // MODULE: Run FastQC
+        if (!skip_analyses.contains('fastqc')) {
+            FASTQC (
+                ch_samplesheet
+            )
+            ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+            ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+        }
+
+
+        // Uncompress genome fasta file if required
+        if (params.fasta) {
+            if (params.fasta.endsWith('.gz')) {
+                ch_genome_fasta    = GUNZIP_FASTA ( [ [:], file(params.fasta) ] ).gunzip.map { it[1] }
+                ch_versions        = ch_versions.mix(GUNZIP_FASTA.out.versions)
+            } else {
+                ch_genome_fasta = Channel.value( file(params.fasta) )
+            }
+        }
+
+        //
+        // Uncompress GTF annotation file or create from GFF3 if required
+        //
+        if (params.gtf) {
+            if (params.gtf.endsWith('.gz')) {
+                ch_gtf      = GUNZIP_GTF ( [ [:], file(params.gtf) ] ).gunzip.map { it[1] }
+                ch_versions = ch_versions.mix(GUNZIP_GTF.out.versions)
+            } else {
+                ch_gtf = Channel.value( file(params.gtf) )
+            }
+        }
+
+        // filter gtf
+        ch_filter_gtf = ch_gtf ? GTF_GENE_FILTER ( ch_genome_fasta, ch_gtf ).gtf : []
+
+
+        // Run kallisto bustools pipeline
+        if (params.aligner == "kallisto") {
+            KALLISTO_BUSTOOLS(
+                ch_genome_fasta,
+                ch_filter_gtf,
+                ch_kallisto_index,
+                ch_txp2gene,
+                kb_t1c,
+                kb_t2c,
+                protocol_config['protocol'],
+                kb_workflow,
+                ch_samplesheet
+            )
+            ch_versions = ch_versions.mix(KALLISTO_BUSTOOLS.out.ch_versions)
+            ch_mtx_matrices = ch_mtx_matrices.mix(KALLISTO_BUSTOOLS.out.raw_counts, KALLISTO_BUSTOOLS.out.filtered_counts)
+            ch_txp2gene = KALLISTO_BUSTOOLS.out.txp2gene
+        }
+
+        // Run salmon alevin pipeline
+        if (params.aligner == "alevin") {
+            SCRNASEQ_ALEVIN(
+                ch_genome_fasta,
+                ch_filter_gtf,
+                ch_transcript_fasta,
+                ch_salmon_index,
+                ch_txp2gene,
+                ch_barcode_whitelist,
+                protocol_config['protocol'],
+                ch_samplesheet
+            )
+            ch_versions = ch_versions.mix(SCRNASEQ_ALEVIN.out.ch_versions)
+            ch_multiqc_files = ch_multiqc_files.mix(SCRNASEQ_ALEVIN.out.alevin_results.map{ meta, it -> it })
+            ch_mtx_matrices = ch_mtx_matrices.mix(SCRNASEQ_ALEVIN.out.alevin_results)
+        }
+
+        // Run STARSolo pipeline
+        if (params.aligner == "star") {
+            STARSOLO(
+                ch_genome_fasta,
+                ch_filter_gtf,
+                ch_star_index,
+                protocol_config['protocol'],
+                ch_barcode_whitelist,
+                ch_samplesheet,
+                star_feature,
+                protocol_config.get('extra_args', ""),
+            )
+            ch_versions = ch_versions.mix(STARSOLO.out.ch_versions)
+            ch_mtx_matrices = ch_mtx_matrices.mix(STARSOLO.out.raw_counts, STARSOLO.out.filtered_counts)
+            ch_star_index = STARSOLO.out.star_index
+            ch_multiqc_files = ch_multiqc_files.mix(STARSOLO.out.for_multiqc)
+        }
+
+
+        // Run mtx to h5ad conversion subworkflow
+        MTX_CONVERSION (
+            ch_mtx_matrices,
+            ch_input,
+            ch_txp2gene,
+            ch_star_index
         )
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+
+        //Add Versions from MTX Conversion workflow too
+        ch_versions.mix(MTX_CONVERSION.out.ch_versions)
+
     }
 
 
-    //
-    // Uncompress genome fasta file if required
-    //
-    if (params.fasta) {
-        if (params.fasta.endsWith('.gz')) {
-            ch_genome_fasta    = GUNZIP_FASTA ( [ [:], file(params.fasta) ] ).gunzip.map { it[1] }
-            ch_versions        = ch_versions.mix(GUNZIP_FASTA.out.versions)
-        } else {
-            ch_genome_fasta = Channel.value( file(params.fasta) )
+    //===================================== Primary anaysis stage =====================================
+
+    if (analyses.contains('secondary')){
+    
+        // MODULE: Run QC and cell filtering
+        if (!skip_analyses.contains('qccellfilter')) {
+            QC_CELL_FILTER (
+                ch_sampleMTX_CONVERSION.out.h5ad
+            )
+            ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+            ch_versions = ch_versions.mix(QC_CELL_FILTER.out.versions)
         }
     }
 
-    //
-    // Uncompress GTF annotation file or create from GFF3 if required
-    //
-    if (params.gtf) {
-        if (params.gtf.endsWith('.gz')) {
-            ch_gtf      = GUNZIP_GTF ( [ [:], file(params.gtf) ] ).gunzip.map { it[1] }
-            ch_versions = ch_versions.mix(GUNZIP_GTF.out.versions)
-        } else {
-            ch_gtf = Channel.value( file(params.gtf) )
-        }
-    }
-
-    // filter gtf
-    ch_filter_gtf = ch_gtf ? GTF_GENE_FILTER ( ch_genome_fasta, ch_gtf ).gtf : []
 
 
-    // Run kallisto bustools pipeline
-    if (params.aligner == "kallisto") {
-        KALLISTO_BUSTOOLS(
-            ch_genome_fasta,
-            ch_filter_gtf,
-            ch_kallisto_index,
-            ch_txp2gene,
-            kb_t1c,
-            kb_t2c,
-            protocol_config['protocol'],
-            kb_workflow,
-            ch_samplesheet
-        )
-        ch_versions = ch_versions.mix(KALLISTO_BUSTOOLS.out.ch_versions)
-        ch_mtx_matrices = ch_mtx_matrices.mix(KALLISTO_BUSTOOLS.out.raw_counts, KALLISTO_BUSTOOLS.out.filtered_counts)
-        ch_txp2gene = KALLISTO_BUSTOOLS.out.txp2gene
-    }
 
-    // Run salmon alevin pipeline
-    if (params.aligner == "alevin") {
-        SCRNASEQ_ALEVIN(
-            ch_genome_fasta,
-            ch_filter_gtf,
-            ch_transcript_fasta,
-            ch_salmon_index,
-            ch_txp2gene,
-            ch_barcode_whitelist,
-            protocol_config['protocol'],
-            ch_samplesheet
-        )
-        ch_versions = ch_versions.mix(SCRNASEQ_ALEVIN.out.ch_versions)
-        ch_multiqc_files = ch_multiqc_files.mix(SCRNASEQ_ALEVIN.out.alevin_results.map{ meta, it -> it })
-        ch_mtx_matrices = ch_mtx_matrices.mix(SCRNASEQ_ALEVIN.out.alevin_results)
-    }
-
-    // Run STARSolo pipeline
-    if (params.aligner == "star") {
-        STARSOLO(
-            ch_genome_fasta,
-            ch_filter_gtf,
-            ch_star_index,
-            protocol_config['protocol'],
-            ch_barcode_whitelist,
-            ch_samplesheet,
-            star_feature,
-            protocol_config.get('extra_args', ""),
-        )
-        ch_versions = ch_versions.mix(STARSOLO.out.ch_versions)
-        ch_mtx_matrices = ch_mtx_matrices.mix(STARSOLO.out.raw_counts, STARSOLO.out.filtered_counts)
-        ch_star_index = STARSOLO.out.star_index
-        ch_multiqc_files = ch_multiqc_files.mix(STARSOLO.out.for_multiqc)
-    }
-
-
-    // Run mtx to h5ad conversion subworkflow
-    MTX_CONVERSION (
-        ch_mtx_matrices,
-        ch_input,
-        ch_txp2gene,
-        ch_star_index
-    )
-
-    //Add Versions from MTX Conversion workflow too
-    ch_versions.mix(MTX_CONVERSION.out.ch_versions)
 
 
     //

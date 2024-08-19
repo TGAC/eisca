@@ -60,6 +60,7 @@ workflow MTX_CONVERSION {
 
     emit:
     ch_versions
+    h5ad = CONCAT_H5AD.out.h5ad
     // counts = MTX_TO_H5AD.out.counts  was this ever used?
 
 }

@@ -7,7 +7,7 @@ from scipy import io
 import anndata
 from matplotlib import pyplot as plt
 import argparse
-import sys
+import sys, json
 from pathlib import Path
 import util
 # from .util import get_named_logger,
@@ -84,14 +84,19 @@ def main(argv=None):
         sys.exit(2)
 
     util.check_and_create_folder(args.outdir)
-    path_quant_qc_scatter = Path(args.outdir, 'quant_qc', 'scatter')
-    path_quant_qc_violin = Path(args.outdir, 'quant_qc', 'violin')
+    # path_quant_qc = Path(args.outdir, 'quant_qc')
+    path_quant_qc = Path(args.outdir)
+    path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
+    path_quant_qc_violin = Path(path_quant_qc, 'violin')
     path_cell_filtering = Path(args.outdir, 'cell_filtering')
+    util.check_and_create_folder(path_quant_qc)
     util.check_and_create_folder(path_quant_qc_scatter)
     util.check_and_create_folder(path_quant_qc_violin)
     util.check_and_create_folder(path_cell_filtering)
 
     adata = anndata.read_h5ad(args.h5ad)
+    summary = []
+
     # import pdb; pdb.set_trace() #debug code
     # QC on raw counts
     # mitochondrial genes
@@ -104,6 +109,20 @@ def main(argv=None):
     sc.pp.calculate_qc_metrics(
         adata, qc_vars=["mt", "ribo", "hb"], inplace=True, log1p=True
     )
+
+    # create summary csv file for all samples
+    for sid in adata.obs['sample'].unique():
+        adata_s = adata[adata.obs['sample']==sid]
+        summary += [{
+            'sample_id': sid,
+            'n_cells': adata_s.obs[adata_s.obs['n_genes_by_counts']>0].shape[0],
+            'n_genes': adata_s.var[adata_s.var['n_cells_by_counts']>0].shape[0],
+            'gpc_median': np.median(adata_s.obs['n_genes_by_counts']),
+            'pctmt_median':  np.median(adata_s.obs['pct_counts_mt']),
+        }]
+    summary = pd.DataFrame(summary) 
+    summary.to_csv(Path(path_quant_qc, 'sample_summary.csv'), index=False)
+        
 
     for sid in adata.obs['sample'].unique():
         adata_s = adata[adata.obs['sample']==sid]

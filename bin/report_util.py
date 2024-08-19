@@ -100,28 +100,39 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=['12
         suffix: list of suffix used to match the image files
         widths: the column withs of Grid columns
     """
-
+    
     if meta in ['sample', 'group']:
         tabs = Tabs()
         for folder in sorted([f for f in path.iterdir() if f.is_dir()]):
             if folder.name.startswith(f'{meta}_'):
                 sample_id = folder.name.split('_', 1)[1]
                 with tabs.add_tab(sample_id):
-                    with Grid(columns=ncol):
-                        pathes = [next(folder.glob('*'+sf)) for sf in suffix]
-                        for img_path, width in zip(pathes, widths):
-                            with open(img_path, 'rb') as fh:
-                                b64img = base64.b64encode(fh.read()).decode()
-                                with figure(cls='text-center'):
-                                    img(src=f'data:image/png;base64,{b64img}', width=width)
+                    # pathes = [next(folder.glob('*'+sf)) for sf in suffix]
+                    pathes = sorted([file for sf in suffix for file in folder.glob('*'+sf) if file.is_file()])
+                    Np = len(pathes)
+                    widths = (widths*(Np//len(widths)+1))[0:Np]
+                    for i in [r*ncol for r in range(Np//ncol+Np%ncol)]:
+                        with Grid(columns=ncol):
+                            pathes_r = [pathes[i+s] for s in range(ncol) if i+s < Np]
+                            widths_r = [widths[i+s] for s in range(ncol) if i+s < Np]
+                            for img_path, width in zip(pathes_r, widths_r):
+                                with open(img_path, 'rb') as fh:
+                                    b64img = base64.b64encode(fh.read()).decode()
+                                    with figure(cls='text-center'):
+                                        img(src=f'data:image/png;base64,{b64img}', width=width)
     else:
-        with Grid(columns=ncol):
-            pathes = [next(path.glob('*'+sf)) for sf in suffix]
-            for img_path, width in zip(pathes, widths):
-                with open(img_path, 'rb') as fh:
-                    b64img = base64.b64encode(fh.read()).decode()
-                    with figure(cls='text-center'):
-                        img(src=f'data:image/png;base64,{b64img}', width=width)        
+        pathes = sorted([file for sf in suffix for file in path.glob('*'+sf) if file.is_file()])
+        Np = len(pathes)
+        widths = (widths*(Np//len(widths)+1))[0:Np]
+        for i in [r*ncol for r in range(Np//ncol+Np%ncol)]:        
+            with Grid(columns=ncol):
+                pathes_r = [pathes[i+s] for s in range(ncol) if i+s < Np]
+                widths_r = [widths[i+s] for s in range(ncol) if i+s < Np]
+                for img_path, width in zip(pathes_r, widths_r):
+                    with open(img_path, 'rb') as fh:
+                        b64img = base64.b64encode(fh.read()).decode()
+                        with figure(cls='text-center'):
+                            img(src=f'data:image/png;base64,{b64img}', width=width)        
 
 
 class EILogo(div):

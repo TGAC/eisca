@@ -68,8 +68,24 @@ def main(argv=None):
         sc.pp.normalize_total(adata, target_sum=1e4)
         sc.pp.log1p(adata)
 
+    #s if not(hasattr(adata.obs, 'total_counts') and hasattr(adata.obs, 'pct_counts_mt')):
+    #s     adata.var['mt'] = adata.var_names.str.startswith('MT-')
+    #s     sc.pp.calculate_qc_metrics(adata, qc_vars=["mt"], inplace=True, log1p=True)
+        # sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+
     # Feature selection and dimensionality reduction
-    sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
+    sc.pp.highly_variable_genes(adata)
+    #sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
+    #s sc.pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
+    #s adata.raw = adata
+    #s adata = adata[:, adata.var.highly_variable]
+
+    # Regress out effects of total counts per cell and the percentage of mitochondrial genes expressed
+    #s sc.pp.regress_out(adata, ['total_counts', 'pct_counts_mt'])
+    #s sc.pp.scale(adata, max_value=10) #scale each gene to unit variance
+
+    # Dimensionality reduction
+    sc.tl.pca(adata, svd_solver='arpack')
 
     # find nearest neighbor graph constuction
     sc.pp.neighbors(adata, n_neighbors=10, n_pcs=20)

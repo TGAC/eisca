@@ -122,9 +122,33 @@ def main(argv=None):
     path_cell_filtering = Path(args.results, 'cell_filtering')
     path_clustering_samples = Path(args.results, 'clustering')
 
+    
     if path_quant_qc.exists():
+        summary = pd.read_csv(Path(path_quant_qc, 'sample_summary.csv'))
+        with report.add_section('Single cell summary', 'cell_summary'):
+            html.p("""This section gives an overall summary of the single-cell count matrix for 
+                   each sample. The statistics include the total number of cells with at least 
+                   one gene expressed, the total number of genes expressed in at least one cell, 
+                   the median number of genes per cell, and the median percentage of counts in 
+                   mitochondrial genes (pct-mt).""")
+            table = DataTable(
+                headers=[
+                    'sample ID', 'Number of cells', 'Number of genes', 'Median genes per cell', 'Median of pct-mt'])
+            for index, row in summary.iterrows():
+                row = list(row)
+                table.add_row(
+                    title = row[0],
+                    columns = row[1:]
+                )            
+
         with report.add_section('Quantification QC', 'quant_QC'):
-            html.p("""This section shows the QC plots of counts from alignment and quantification steps.""")
+            html.p("""This section presents the QC plots of the raw count matrix generated during 
+                   the quantification step. The scatter plot shows the relationship between total 
+                   read counts and the number of genes, with the percentage of counts in 
+                   mitochondrial genes indicated by color. The violin plots display the distribution 
+                   of cells based on the number of genes, total counts, and the percentage of counts 
+                   in mitochondrial genes. These plots provide insight into the quality of the 
+                   experiments and guide the filtering of low-quality cells.""")
             plots_from_image_files(path_quant_qc_scatter, meta='sample', widths=['800'])
             plots_from_image_files(path_quant_qc_violin, meta='sample')
     else:
@@ -140,12 +164,12 @@ def main(argv=None):
 
 
     if path_clustering_samples.exists():
-        with report.add_section('Clustering on samples', 'cell_filtering'):
+        with report.add_section('Cell clustering of samples', 'cell_clustering'):
             html.p("""This section shows clustering UMAP plots for each sample. The clustering 
                    was performed using Leiden graph-clustering method. The resolution parameter 
                    was set foir different values to get different number of clusters which 
                    could match to biologically-meaningful cell types.""")
-            plots_from_image_files(path_clustering_samples, meta='sample', widths=['1200'])            
+            plots_from_image_files(path_clustering_samples, meta='sample', ncol=2, widths=['600','600'])            
     else:
         logger.info('Skipping Cell filtering')        
 
