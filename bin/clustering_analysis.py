@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# Set numba chache dir to current working directory (which is a writable mount also in containers)
+import os
+os.environ["NUMBA_CACHE_DIR"] = "."
+os.environ[ 'MPLCONFIGDIR' ] = '/tmp/'
+
 import scanpy as sc
 import pandas as pd
 import numpy as np
@@ -13,7 +18,7 @@ import util
 
 logger = util.get_named_logger('QC_CellFitering')
 
-
+# util.check_and_install('leidenalg')
 
 def parse_args(argv=None):
     """Define and immediately parse command line arguments."""
@@ -38,12 +43,13 @@ def parse_args(argv=None):
     parser.add_argument(
         "--normalize",
         help="Whether to apply normalization to the data.",
-        action=argparse.BooleanOptionalAction,
+        action='store_true',
+        # action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
         "--resolutions",
         type=util.floatlist,
-        help="Resulution is used to control number of clusters.",
+        help="Resolution is used to control number of clusters.",
         default=[0.02, 0.1, 0.5],
     )                 
     return parser.parse_args(argv)
@@ -58,7 +64,7 @@ def main(argv=None):
         sys.exit(2)
 
     util.check_and_create_folder(args.outdir)
-    path_clustering = Path(args.outdir, 'clustering')
+    path_clustering = Path(args.outdir)
     util.check_and_create_folder(path_clustering)
 
     adata = anndata.read_h5ad(args.h5ad)

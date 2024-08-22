@@ -173,7 +173,7 @@ def main(argv=None):
 
 
     if path_clustering_samples.exists():
-        with report.add_section('Cell clustering of samples', 'Cell clustering'):
+        with report.add_section('Clustering analysis', 'Clustering'):
             html.p("""This section shows clustering UMAP plots for each sample. The clustering 
                    was performed using Leiden graph-clustering method. The resolution parameter 
                    was set for different values to get different number of clusters which 

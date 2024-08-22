@@ -1,8 +1,10 @@
 
 import argparse
 import logging
-import os
+import os, sys
 from pathlib import Path
+import subprocess
+import importlib.util
 
 _log_name = None
 
@@ -98,3 +100,17 @@ def floatlist(floatstr):
     except ValueError:
         raise argparse.ArgumentTypeError('Invalid float number!')
     return floats
+
+
+def check_and_install(package):
+    # Check if the package is installed
+    package_spec = importlib.util.find_spec(package)
+    if package_spec is None:
+        print(f"Package '{package}' is not installed. Installing now...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        except subprocess.CalledProcessError:
+            print(f"Failed to install package '{package}'.")
+            sys.exit(1)
+    else:
+        print(f"Package '{package}' is already installed.")
