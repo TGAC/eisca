@@ -21,6 +21,9 @@ include { EISCA  } from './workflows/eisca'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_eisca_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_eisca_pipeline'
 
+include { GET_PARAMS              } from './modules/local/get_params'
+include { MAKE_REPORT             } from './modules/local/make_report'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     GENOME PARAMETER VALUES
@@ -37,6 +40,9 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_eisc
     NAMED WORKFLOWS FOR PIPELINE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+analyses = params.analyses.split(',').toList()
+skip_analyses = params.skip? params.skip.split(',').toList() : []
 
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
@@ -55,13 +61,14 @@ workflow NFCORE_EISCA {
         samplesheet
     )
 
-
+    ch_results = Channel.fromPath(params.outdir)
     if (analyses.contains('primary') || analyses.contains('secondary')){
-        def workflow_params = getParams()
+        // GET_PARAMS()
         MAKE_REPORT (
-            EISCA.out.versions,
-            // software_versions,
-            getParams(),
+            ch_results,
+            EISCA.out.multiqc_report,
+            // EISCA.out.versions,
+            // GET_PARAMS.out.json,
         )        
     }
 

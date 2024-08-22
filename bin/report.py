@@ -66,6 +66,13 @@ def parse_args(argv=None):
         help="Workflow versions file",
         required=True,
     )
+    parser.add_argument(
+        "--logo",
+        metavar="FILE_LOGO",
+        type=Path,
+        help="Logo image file",
+        required=True,
+    )    
     # parser.add_argument(
     #     "--umap_dirs", nargs='+',
     #     help="Sample directories containing umap and gene expression files")
@@ -75,7 +82,7 @@ def parse_args(argv=None):
     #     "--metadata", default='metadata.json', required=True,
     #     help="sample metadata")
     parser.add_argument(
-        "--wf_version", default='unknown',
+        "--wf-version", default='unknown',
         help="version of the executed workflow")               
     return parser.parse_args(argv)
 
@@ -103,7 +110,8 @@ def main(argv=None):
     navdiv = report.nav.getElementsByTagName('div')[0]
     link = html.a(href='https://www.earlham.ac.uk/', cls=ILabsNavigationClasses().logo)
     with link:
-        with open(Path('images/EI_logo.png'), 'rb') as f:
+        # with open(Path('images/EI_logo.png'), 'rb') as f:
+        with open(Path(args.logo), 'rb') as f:
             b64img = base64.b64encode(f.read()).decode()
             html.img(src=f'data:image/png;base64,{b64img}', width=120)
     navdiv[0] = link
@@ -116,16 +124,17 @@ def main(argv=None):
     # samplesheet = pd.read_csv(args.samplesheet)
     # samples = samplesheet['sample'].unique()
 
-    path_quant_qc = Path(args.results, 'quant_qc')
+    path_quant_qc = Path(args.results, 'qc_cell_filter')
     path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
     path_quant_qc_violin = Path(path_quant_qc, 'violin')
-    path_cell_filtering = Path(args.results, 'cell_filtering')
+    path_cell_filtering = Path(path_quant_qc, 'cell_filtering')
     path_clustering_samples = Path(args.results, 'clustering')
 
-    
+    # print(path_quant_qc) #tst
+
     if path_quant_qc.exists():
         summary = pd.read_csv(Path(path_quant_qc, 'sample_summary.csv'))
-        with report.add_section('Single cell summary', 'cell_summary'):
+        with report.add_section('Single cell summary', 'Summary'):
             html.p("""This section gives an overall summary of the single-cell count matrix for 
                    each sample. The statistics include the total number of cells with at least 
                    one gene expressed, the total number of genes expressed in at least one cell, 
@@ -141,7 +150,7 @@ def main(argv=None):
                     columns = row[1:]
                 )            
 
-        with report.add_section('Quantification QC', 'quant_QC'):
+        with report.add_section('Quantification QC', 'QC'):
             html.p("""This section presents the QC plots of the raw count matrix generated during 
                    the quantification step. The scatter plot shows the relationship between total 
                    read counts and the number of genes, with the percentage of counts in 
@@ -155,7 +164,7 @@ def main(argv=None):
         logger.info('Skipping Quantification QC')
 
     if path_quant_qc.exists():
-        with report.add_section('Cell filtering', 'cell_filtering'):
+        with report.add_section('Cell filtering', 'Cell filtering'):
             html.p("""This section shows the QC plots after filtering cells.""")
             plots_from_image_files(path_cell_filtering, widths=['800'])            
             plots_from_image_files(path_cell_filtering, meta='sample')            
@@ -164,10 +173,10 @@ def main(argv=None):
 
 
     if path_clustering_samples.exists():
-        with report.add_section('Cell clustering of samples', 'cell_clustering'):
+        with report.add_section('Cell clustering of samples', 'Cell clustering'):
             html.p("""This section shows clustering UMAP plots for each sample. The clustering 
                    was performed using Leiden graph-clustering method. The resolution parameter 
-                   was set foir different values to get different number of clusters which 
+                   was set for different values to get different number of clusters which 
                    could match to biologically-meaningful cell types.""")
             plots_from_image_files(path_clustering_samples, meta='sample', ncol=2, widths=['600','600'])            
     else:

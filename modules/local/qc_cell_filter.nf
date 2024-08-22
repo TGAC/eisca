@@ -11,8 +11,9 @@ process QC_CELL_FILTER {
     // path samplesheet
 
     output:
-    path "*.h5ad", emit: h5ad_filtered
-    path "versions.yml"    , emit: versions
+    path "qc_cell_filter"
+    path "qc_cell_filter/*.h5ad",  emit: h5ad_filtered
+    path "versions.yml",  emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,7 +23,7 @@ process QC_CELL_FILTER {
     """
     qc_cell_filter.py \\
         --h5ad ${h5ad_raw} \\
-        --outdir ${params.outdir} \\
+        --outdir qc_cell_filter \\
         $args \\
 
 

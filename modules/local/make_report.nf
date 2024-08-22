@@ -1,16 +1,21 @@
+import groovy.json.JsonBuilder
 
 process MAKE_REPORT {
     // tag "$meta.id"
     label 'process_low'
+    // debug true
 
-    conda "bioconda::pysam=0.19.0 bioconda::samtools=1.15.1"
+    // conda "bioconda::pysam=0.19.0 bioconda::samtools=1.15.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mulled-v2-57736af1eb98c01010848572c9fec9fff6ffaafd:402e865b8f6af2f3e58c6fc8d57127ff0144b2c7-0' :
-        'biocontainers/mulled-v2-57736af1eb98c01010848572c9fec9fff6ffaafd:402e865b8f6af2f3e58c6fc8d57127ff0144b2c7-0' }"
+        'docker.io/ontresearch/wf-common:sha338caea0a2532dc0ea8f46638ccc322bb8f9af48' :
+        'docker.io/ontresearch/wf-common:sha338caea0a2532dc0ea8f46638ccc322bb8f9af48' }"
 
     input:
-    path "versions.txt"
-    path "params.json"
+    // val  ready
+    // path "versions.txt"
+    path results
+    path multiqc_report // just for executing in the end of pipeline
+    // path "params.json"
 
     output:
     path "eisca_report.html"
@@ -19,18 +24,26 @@ process MAKE_REPORT {
     task.ext.when == null || task.ext.when
 
     script:
+    report_name = "eisca_report.html"
+    String paramsJSON = new JsonBuilder(params).toPrettyString()
     """
+    echo '$paramsJSON' > params.json
+    
+cat << EOF > versions.txt
+QC_CELL_FILTER:Python,3.8.8
+QC_CELL_FILTER:pandas,1.2.3
+QC_CELL_FILTER:scanpy,1.7.2 
+QC_CELL_FILTER:anndata,0.7.5
+EOF
+
     report.py \\
-        --report-fname eisca_report.html \\
-        --results ${params.outdir} \\
+        $report_name \\
+        --results ${results} \\
         --versions versions.txt \\
         --params params.json \\
         --wf-version ${workflow.manifest.version} \\
+        --logo ${workflow.projectDir}/bin/images/EI_logo.png \\
 
 
-    // cat <<-END_VERSIONS > versions.yml
-    // "${task.process}":
-    //     python: \$(python --version | sed 's/Python //g')
-    // END_VERSIONS
     """
 }

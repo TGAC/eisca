@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# Set numba chache dir to current working directory (which is a writable mount also in containers)
+import os
+os.environ["NUMBA_CACHE_DIR"] = "."
+os.environ[ 'MPLCONFIGDIR' ] = '/tmp/'
+
 import scanpy as sc
 import pandas as pd
 import numpy as np
@@ -164,6 +169,9 @@ def main(argv=None):
     # Normalization
     sc.pp.normalize_total(adata, target_sum=1e4)
     sc.pp.log1p(adata)
+
+    # save a filtered and normalized h5ad file
+    adata.write_h5ad(Path(path_quant_qc, 'cell_filtered_normalized.h5ad'))
 
     # Feature selection and dimensionality reduction
     sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
