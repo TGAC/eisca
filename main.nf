@@ -62,7 +62,7 @@ workflow NFCORE_EISCA {
     )
 
     ch_results = Channel.fromPath(params.outdir)
-    if (analyses.contains('primary') || analyses.contains('secondary')){
+    if (analyses.contains('secondary') || analyses.contains('tertiary')){
         // GET_PARAMS()
         MAKE_REPORT (
             ch_results,

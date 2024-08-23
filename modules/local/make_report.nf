@@ -30,10 +30,10 @@ process MAKE_REPORT {
     echo '$paramsJSON' > params.json
     
 cat << EOF > versions.txt
-QC_CELL_FILTER:Python,3.8.8
-QC_CELL_FILTER:pandas,1.2.3
-QC_CELL_FILTER:scanpy,1.7.2 
-QC_CELL_FILTER:anndata,0.7.5
+Python,3.9.18
+pandas,2.2.0
+scanpy,1.9.3 
+anndata,0.10.5.post1
 EOF
 
     report.py \\

@@ -171,7 +171,7 @@ def main(argv=None):
     sc.pp.log1p(adata)
 
     # save a filtered and normalized h5ad file
-    adata.write_h5ad(Path(path_quant_qc, 'cell_filtered_normalized.h5ad'))
+    adata.write_h5ad(Path(path_quant_qc, 'adata_filtered_normalized.h5ad'))
 
     # Feature selection and dimensionality reduction
     sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
