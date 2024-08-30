@@ -5,6 +5,7 @@ import ezcharts as ezc
 from ezcharts.components.reports.labs import LabsReport, LabsNavigation, ILabsNavigationClasses
 from ezcharts.layout.snippets import DataTable, Grid, Tabs
 from ezcharts.components.theme import LAB_head_resources
+from ezcharts.components.ezchart import EZChart
 
 import argparse
 from pathlib import Path
@@ -128,46 +129,54 @@ def main(argv=None):
     path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
     path_quant_qc_violin = Path(path_quant_qc, 'violin')
     path_cell_filtering = Path(path_quant_qc, 'cell_filtering')
+    path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
     path_clustering_samples = Path(args.results, 'clustering')
 
     # print(path_quant_qc) #tst
 
     if path_quant_qc.exists():
-        summary = pd.read_csv(Path(path_quant_qc, 'sample_summary.csv'))
+        summary = pd.read_csv(Path(path_quant_qc, 'sample_summary.csv')).set_index('Sample ID')
         with report.add_section('Single cell summary', 'Summary'):
             html.p("""This section gives an overall summary of the single-cell count matrix for 
                    each sample. The statistics include the total number of cells with at least 
                    one gene expressed, the total number of genes expressed in at least one cell, 
                    the median number of genes per cell, and the median percentage of counts in 
                    mitochondrial genes (pct-mt).""")
-            table = DataTable(
-                headers=[
-                    'sample ID', 'Number of cells', 'Number of genes', 'Median genes per cell', 'Median of pct-mt'])
-            for index, row in summary.iterrows():
-                row = list(row)
-                table.add_row(
-                    title = row[0],
-                    columns = row[1:]
-                )            
+            DataTable.from_pandas(summary)   
 
         with report.add_section('Quantification QC', 'QC'):
             html.p("""This section presents the QC plots of the raw count matrix generated during 
-                   the quantification step. The scatter plot shows the relationship between total 
-                   read counts and the number of genes, with the percentage of counts in 
-                   mitochondrial genes indicated by color. The violin plots display the distribution 
-                   of cells based on the number of genes, total counts, and the percentage of counts 
-                   in mitochondrial genes. These plots provide insight into the quality of the 
+                   the quantification step. These plots provide insight into the quality of the 
                    experiments and guide the filtering of low-quality cells.""")
+            html.p("""The following scatter plot shows the relationship between total 
+                   read counts and the number of genes, with the percentage of counts in 
+                   mitochondrial genes indicated by color.""")
             plots_from_image_files(path_quant_qc_scatter, meta='sample', widths=['800'])
+            html.p("""The following violin plots display the distribution of cells based on the number of 
+                   genes, total counts, and the percentage of counts in mitochondrial genes.""")
             plots_from_image_files(path_quant_qc_violin, meta='sample')
     else:
         logger.info('Skipping Quantification QC')
 
-    if path_quant_qc.exists():
+    if path_cell_filtering.exists():
+        summary = pd.read_csv(Path(path_cell_filtering, 'sample_summary_filtered.csv')).set_index('Sample ID')
         with report.add_section('Cell filtering', 'Cell filtering'):
-            html.p("""This section shows the QC plots after filtering cells.""")
-            plots_from_image_files(path_cell_filtering, widths=['800'])            
-            plots_from_image_files(path_cell_filtering, meta='sample')            
+            html.p("""This section presents the statistics and QC plots after cell filtering process. 
+                   The filtering process includes hard thresholds for minimum genes, minimum counts, 
+                   minimum cells and the percentage of counts in mitochondrial genes. Additionally, 
+                   users can set quantile limits on the number of genes. Then doublet detection is 
+                   performed using Scrublet.""")
+            html.p("""The following table shows summary statistics, with percentages in brackets 
+                   indicating the comparison to the raw counts.""")
+            DataTable.from_pandas(summary)
+            html.p("""The following plots show the distribution KDE curves before and after filtering 
+                   for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")            
+            plots_from_image_files(path_cell_filtering_dist, meta='sample', ncol=2)
+            html.p("""The following plots show the UMAP plots
+                   for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")                        
+            plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_total*.png'])
+            html.p("""The following plots show the UMAP plots for the predicted doublets and doublet scores.""")                        
+            plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_doublet.png'])            
     else:
         logger.info('Skipping Cell filtering')
 
@@ -178,7 +187,7 @@ def main(argv=None):
                    was performed using Leiden graph-clustering method. The resolution parameter 
                    was set for different values to get different number of clusters which 
                    could match to biologically-meaningful cell types.""")
-            plots_from_image_files(path_clustering_samples, meta='sample', ncol=2, widths=['600','600'])            
+            plots_from_image_files(path_clustering_samples, meta='sample', ncol=2)            
     else:
         logger.info('Skipping Cell filtering')        
 

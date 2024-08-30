@@ -12,7 +12,7 @@ process CLUSTERING_ANALYSIS {
 
     output:
     path "clustering"
-    // path "clustering/*.h5ad",  emit: h5ad_filtered
+    path "clustering/*.h5ad",  emit: h5ad_clustering
     path "versions.yml",  emit: versions
 
     when:

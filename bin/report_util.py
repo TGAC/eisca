@@ -1,6 +1,6 @@
 
 from dominate.tags import div, h1, h4, p, code
-from dominate.tags import figure, img
+from dominate.tags import figure, img, a
 import base64
 from ezcharts.layout.snippets import DataTable, Grid, Tabs
 from ezcharts.layout.resource import (ImageResource, ScriptResource, StyleResource, ThemeResource, Resource)
@@ -92,15 +92,17 @@ class EILabsAddendum(Snippet):
 
 
 
-def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=['1200']):
+def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=None):
     """Create a plots section which uses image files.
     PARAMS:
         meta: can be sample or group, by which images are shown in tabs
         ncol: the number of columns for Grid
         suffix: list of suffix used to match the image files
-        widths: the column withs of Grid columns
+        widths: the column withs of Grid columns, e.g.['500','700']
     """
-    
+    if not widths:
+        widths = [1200//ncol]*ncol
+
     if meta in ['sample', 'group']:
         tabs = Tabs()
         for folder in sorted([f for f in path.iterdir() if f.is_dir()]):
@@ -120,6 +122,7 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=['12
                                     b64img = base64.b64encode(fh.read()).decode()
                                     with figure(cls='text-center'):
                                         img(src=f'data:image/png;base64,{b64img}', width=width)
+                                        # a(img(src=f'data:image/png;base64,{b64img}', width=width), href=f'{img_path}')
     else:
         pathes = sorted([file for sf in suffix for file in path.glob('*'+sf) if file.is_file()])
         Np = len(pathes)
@@ -132,7 +135,8 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=['12
                     with open(img_path, 'rb') as fh:
                         b64img = base64.b64encode(fh.read()).decode()
                         with figure(cls='text-center'):
-                            img(src=f'data:image/png;base64,{b64img}', width=width)        
+                            img(src=f'data:image/png;base64,{b64img}', width=width)
+                            # a(img(src=f'data:image/png;base64,{b64img}', width=width), href=f'{img_path}')        
 
 
 class EILogo(div):

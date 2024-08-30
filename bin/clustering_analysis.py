@@ -46,6 +46,12 @@ def parse_args(argv=None):
         action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
+        "--rmdoublets",
+        help="Whether to filter out the cells called as doublets.",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )       
+    parser.add_argument(
         "--regress",
         help="Whether to regress out the variations from the total counts and the percentage of mitochondrial genes expressed.",
         action=argparse.BooleanOptionalAction,
@@ -60,7 +66,7 @@ def parse_args(argv=None):
         type=util.floatlist,
         help="Resolution is used to control number of clusters.",
         default=[0.02, 0.05, 0.1, 0.5],
-    )                 
+    )              
     return parser.parse_args(argv)
 
 
@@ -136,6 +142,14 @@ def main(argv=None):
     )
     sc.tl.umap(adata)
 
+    # save a filtered and normalized h5ad file
+    adata.write_h5ad(Path(path_clustering, 'adata_clustering.h5ad'))
+
+    # remove doublets before clustering
+    if args.rmdoublets:
+        if hasattr(adata.obs, 'predicted_doublet'):
+            adata = adata[adata.obs['predicted_doublet']]
+
     # perform clustering using Leiden graph-clustering method
     # sc.tl.leiden(adata, flavor="igraph", n_iterations=2, resolution=args.resolution)
     for sid in adata.obs['sample'].unique():
@@ -157,9 +171,6 @@ def main(argv=None):
                 )
                 plt.savefig(Path(path_clustering_s, f"umap_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
 
- 
-    # save a filtered and normalized h5ad file
-    adata.write_h5ad(Path(path_clustering, 'adata_clustering.h5ad'))
 
 if __name__ == "__main__":
     sys.exit(main())
