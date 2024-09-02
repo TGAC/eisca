@@ -129,7 +129,7 @@ def main(argv=None):
     path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
     path_quant_qc_violin = Path(path_quant_qc, 'violin')
     path_cell_filtering = Path(path_quant_qc, 'cell_filtering')
-    path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
+    # path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
     path_clustering_samples = Path(args.results, 'clustering')
 
     # print(path_quant_qc) #tst
@@ -171,7 +171,7 @@ def main(argv=None):
             DataTable.from_pandas(summary)
             html.p("""The following plots show the distribution KDE curves before and after filtering 
                    for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")            
-            plots_from_image_files(path_cell_filtering_dist, meta='sample', ncol=2)
+            plots_from_image_files(path_cell_filtering, meta='sample', ncol=2, suffix=['dist*.png'])
             html.p("""The following plots show the UMAP plots
                    for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")                        
             plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_total*.png'])
