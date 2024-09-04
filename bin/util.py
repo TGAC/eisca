@@ -1,7 +1,7 @@
 
 import argparse
 import logging
-import os, sys
+import os, sys, glob
 from pathlib import Path
 import subprocess
 import importlib.util
@@ -63,6 +63,18 @@ def check_and_create_folder(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
 
+
+def check_file(folder_pattern, file_name):
+    """
+    Check if the file exists in the folder
+    """
+    search_pattern = os.path.join(folder_pattern, file_name)
+    matching_files = glob.glob(search_pattern)
+
+    if matching_files:
+        return True
+    else:
+        return False 
 
 
 def check_folder_for_files(folder_path):

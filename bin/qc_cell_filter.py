@@ -84,7 +84,12 @@ def parse_args(argv=None):
         type=float,
         help="Filter genes by lower limit of quantile on number of genes.",
         default=0, # 0.02
-    )            
+    )
+    parser.add_argument(
+        "--not_find_doublets",
+        help="Whether to filter out the cells called as doublets.",
+        action='store_true',
+    )                 
     return parser.parse_args(argv)
 
 
@@ -156,15 +161,26 @@ def main(argv=None):
         # violin plots for n_genes_by_counts, total_counts, pct_counts_mt
         path_sample = Path(path_quant_qc_violin, f"sample_{sid}")
         util.check_and_create_folder(path_sample)
-        with plt.rc_context():
-            sc.pl.violin(
-                adata_s,
-                ["n_genes_by_counts", "total_counts", "pct_counts_mt"],
-                jitter=0.4,
-                multi_panel=True,
-                show=False
-            )
-            plt.savefig(Path(path_sample, 'violin_total_counts_genes_mt.png'), bbox_inches="tight")
+        for i, qc in enumerate(["n_genes_by_counts", "total_counts", "pct_counts_mt"]):
+            with plt.rc_context():
+                sc.pl.violin(
+                    adata_s,
+                    [qc],
+                    jitter=0.4,
+                    show=False
+                )
+                plt.savefig(Path(path_sample, f'violin{i}_{qc}.png'), bbox_inches="tight")
+
+        # due to bug in old scanpy if using multi_panel=True
+        # with plt.rc_context():
+        #     sc.pl.violin(
+        #         adata_s,
+        #         ["n_genes_by_counts", "total_counts", "pct_counts_mt"],
+        #         jitter=0.4,
+        #         multi_panel=True,
+        #         show=False
+        #     )
+        #     plt.savefig(Path(path_sample, 'violin_total_counts_genes_mt.png'), bbox_inches="tight")
 
 
         # Cell filtering
@@ -183,10 +199,12 @@ def main(argv=None):
 
 
         # Doublet detection
-        scrub = scr.Scrublet(adata_s.X, expected_doublet_rate=args.doublet_rate)
-        doublet_scores, predicted_doublets = scrub.scrub_doublets(min_counts=2, min_cells=3, min_gene_variability_pctl=85, n_prin_comps=30)
-        adata_s.obs['doublet_score'] = doublet_scores
-        adata_s.obs['predicted_doublet'] = predicted_doublets
+        if not args.not_find_doublets:
+            scrub = scr.Scrublet(adata_s.X, expected_doublet_rate=args.doublet_rate)
+            doublet_scores, predicted_doublets = scrub.scrub_doublets(min_counts=2, min_cells=3, min_gene_variability_pctl=85, n_prin_comps=30)
+            adata_s.obs['doublet_score'] = doublet_scores
+            adata_s.obs['predicted_doublet'] = predicted_doublets
+            adata_s.obs['predicted_doublet_1'] = [int(x) for x in predicted_doublets] # for ploting
 
 
         # create summary csv file for all samples after filtering
@@ -251,6 +269,7 @@ def main(argv=None):
     sc.pp.normalize_total(adata, target_sum=1e4)
     sc.pp.log1p(adata)
 
+
     # save a filtered and normalized concated h5ad file
     adata.write_h5ad(Path(path_quant_qc, f'adata_filtered_normalized.h5ad'))
 
@@ -279,15 +298,17 @@ def main(argv=None):
         adata_s = adata[adata.obs['sample']==sid]
         path_cell_filtering_s = Path(path_cell_filtering, f"sample_{sid}")
         util.check_and_create_folder(path_cell_filtering_s)
-        with plt.rc_context():
-            sc.pl.umap(
-                adata_s,
-                color=["predicted_doublet", "doublet_score"],
-                wspace=0.3, # increase horizontal space between panels
-                size=3,
-                show=False
-            )
-            plt.savefig(Path(path_cell_filtering_s, 'umap_doublet.png'), bbox_inches="tight")
+
+        if 'predicted_doublet' in adata_s.obs.columns:
+            with plt.rc_context():
+                sc.pl.umap(
+                    adata_s,
+                    color=["predicted_doublet_1", "doublet_score"],
+                    wspace=0.3, # increase horizontal space between panels
+                    size=3,
+                    show=False
+                )
+                plt.savefig(Path(path_cell_filtering_s, 'umap_doublet.png'), bbox_inches="tight")
 
         with plt.rc_context():
             sc.pl.umap(

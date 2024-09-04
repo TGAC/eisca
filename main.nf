@@ -41,8 +41,8 @@ include { MAKE_REPORT             } from './modules/local/make_report'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-analyses = params.analyses.split(',').toList()
-skip_analyses = params.skip? params.skip.split(',').toList() : []
+// analyses = params.analyses.split(',').toList()
+// skip_analyses = params.skip? params.skip.split(',').toList() : []
 
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
@@ -62,7 +62,7 @@ workflow NFCORE_EISCA {
     )
 
     ch_results = Channel.fromPath(params.outdir)
-    if (analyses.contains('secondary') || analyses.contains('tertiary')){
+    if (params.analyses.contains('secondary') || params.analyses.contains('tertiary')){
         // GET_PARAMS()
         MAKE_REPORT (
             ch_results,

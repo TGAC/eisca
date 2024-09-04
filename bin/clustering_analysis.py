@@ -42,24 +42,23 @@ def parse_args(argv=None):
     parser.add_argument(
         "--normalize",
         help="Whether to apply normalization to the data.",
-        # action='store_true',
-        action=argparse.BooleanOptionalAction,
+        action='store_true',
+        # action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
-        "--rmdoublets",
+        "--doublets",
         help="Whether to filter out the cells called as doublets.",
-        action=argparse.BooleanOptionalAction,
-        default=True,
+        action='store_true',
     )       
     parser.add_argument(
         "--regress",
         help="Whether to regress out the variations from the total counts and the percentage of mitochondrial genes expressed.",
-        action=argparse.BooleanOptionalAction,
+        action='store_true',
     )
     parser.add_argument(
         "--scale",
         help="Whether to scale the expression to have zero mean and unit variance.",
-        action=argparse.BooleanOptionalAction,
+        action='store_true',
     )        
     parser.add_argument(
         "--resolutions",
@@ -91,6 +90,8 @@ def main(argv=None):
     if args.normalize:
         sc.pp.normalize_total(adata, target_sum=1e4)
         sc.pp.log1p(adata)
+    if not adata.uns['log1p']: # to comply with old version
+        adata.uns['log1p'] = {'base': None}
 
 
     # Feature selection and dimensionality reduction
@@ -146,7 +147,7 @@ def main(argv=None):
     adata.write_h5ad(Path(path_clustering, 'adata_clustering.h5ad'))
 
     # remove doublets before clustering
-    if args.rmdoublets:
+    if not args.doublets:
         if hasattr(adata.obs, 'predicted_doublet'):
             adata = adata[adata.obs['predicted_doublet']]
 

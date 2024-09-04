@@ -154,7 +154,7 @@ def main(argv=None):
             plots_from_image_files(path_quant_qc_scatter, meta='sample', widths=['800'])
             html.p("""The following violin plots display the distribution of cells based on the number of 
                    genes, total counts, and the percentage of counts in mitochondrial genes.""")
-            plots_from_image_files(path_quant_qc_violin, meta='sample')
+            plots_from_image_files(path_quant_qc_violin, meta='sample', ncol=3)
     else:
         logger.info('Skipping Quantification QC')
 
@@ -175,8 +175,9 @@ def main(argv=None):
             html.p("""The following plots show the UMAP plots
                    for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")                        
             plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_total*.png'])
-            html.p("""The following plots show the UMAP plots for the predicted doublets and doublet scores.""")                        
-            plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_doublet.png'])            
+            if util.check_file(f"{path_cell_filtering}/sample_*", 'umap_doublet.png'):
+                html.p("""The following plots show the UMAP plots for the predicted doublets and doublet scores.""")                        
+                plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_doublet.png'])            
     else:
         logger.info('Skipping Cell filtering')
 

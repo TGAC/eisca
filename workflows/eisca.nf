@@ -34,8 +34,8 @@ include { CLUSTERING_ANALYSIS               } from '../modules/local/clustering_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-analyses = params.analyses.split(',').toList()
-skip_analyses = params.skip? params.skip.split(',').toList() : []
+// analyses = params.analyses.split(',').toList()
+// skip_analyses = params.skip? params.skip.split(',').toList() : []
 
 workflow EISCA {
 
@@ -92,10 +92,10 @@ workflow EISCA {
     
     //===================================== Primary anaysis stage =====================================
 
-    if (analyses.contains('primary')){
+    if (params.analyses.contains('primary')){
     
         // MODULE: Run FastQC
-        if (!skip_analyses.contains('fastqc')) {
+        if (!params.skip_analyses.contains('fastqc')) {
             FASTQC (
                 ch_samplesheet
             )
@@ -202,11 +202,11 @@ workflow EISCA {
 
     //===================================== Secondary anaysis stage =====================================
 
-    if (analyses.contains('secondary')){
+    if (params.analyses.contains('secondary')){
     
         // MODULE: Run QC and cell filtering
         ch_h5ad = Channel.empty()
-        if(analyses.contains('primary')){
+        if(params.analyses.contains('primary')){
             ch_h5ad = MTX_CONVERSION.out.h5ad
         }else if(params.h5ad){
             ch_h5ad = Channel.fromPath(params.h5ad)
@@ -222,7 +222,7 @@ workflow EISCA {
             return
         }
 
-        if (!skip_analyses.contains('qccellfilter')) {
+        if (!params.skip_analyses.contains('qccellfilter')) {
             QC_CELL_FILTER (
                 ch_h5ad
                 // MTX_CONVERSION.out.h5ad
@@ -232,7 +232,7 @@ workflow EISCA {
             ch_h5ad = QC_CELL_FILTER.out.h5ad_filtered         
         }
         
-        if (!skip_analyses.contains('clustering')) {
+        if (!params.skip_analyses.contains('clustering')) {
             CLUSTERING_ANALYSIS (
                 ch_h5ad
             )
