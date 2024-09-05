@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import scrublet as scr
-from scipy import io
+from scipy import stats
 import anndata
 from matplotlib import pyplot as plt
 import argparse
@@ -54,7 +54,19 @@ def parse_args(argv=None):
         type=int,
         help="Filter cells by minimum number of counts.",
         default=750,
-    )    
+    )
+    parser.add_argument(
+        "--max_genes",
+        type=int,
+        help="Filter cells by maximum number of genes.",
+        default=0,
+    )
+    parser.add_argument(
+        "--max_counts",
+        type=int,
+        help="Filter cells by maximum number of counts.",
+        default=0,
+    )         
     parser.add_argument(
         "--min_cells",
         type=int,
@@ -86,10 +98,16 @@ def parse_args(argv=None):
         default=0, # 0.02
     )
     parser.add_argument(
-        "--not_find_doublets",
+        "--keep_doublets",
         help="Whether to filter out the cells called as doublets.",
         action='store_true',
-    )                 
+    )
+    parser.add_argument(
+        "--iqr_coef",
+        type=float,
+        help="Remove outliers which larger than iqr_coef*IQR in total_counts.",
+        default=1.5,
+    )                      
     return parser.parse_args(argv)
 
 
@@ -104,14 +122,16 @@ def main(argv=None):
     util.check_and_create_folder(args.outdir)
     # path_quant_qc = Path(args.outdir, 'quant_qc')
     path_quant_qc = Path(args.outdir)
-    path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
-    path_quant_qc_violin = Path(path_quant_qc, 'violin')
+    path_quant_qc_raw = Path(path_quant_qc, 'raw_counts')
+    # path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
+    # path_quant_qc_violin = Path(path_quant_qc, 'violin')
     
     path_cell_filtering = Path(args.outdir, 'cell_filtering')
     # path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
     util.check_and_create_folder(path_quant_qc)
-    util.check_and_create_folder(path_quant_qc_scatter)
-    util.check_and_create_folder(path_quant_qc_violin)
+    util.check_and_create_folder(path_quant_qc_raw)
+    # util.check_and_create_folder(path_quant_qc_scatter)
+    # util.check_and_create_folder(path_quant_qc_violin)
     util.check_and_create_folder(path_cell_filtering)
 
     adata_raw = anndata.read_h5ad(args.h5ad)
@@ -151,7 +171,7 @@ def main(argv=None):
         }]
 
         # scatter plots on total_counts against n_genes_by_counts
-        path_sample = Path(path_quant_qc_scatter, f"sample_{sid}")
+        path_sample = Path(path_quant_qc_raw, f"sample_{sid}")
         util.check_and_create_folder(path_sample)
 
         with plt.rc_context():
@@ -159,7 +179,7 @@ def main(argv=None):
             plt.savefig(Path(path_sample, 'scatter_total_counts_genes.png'), bbox_inches="tight")
 
         # violin plots for n_genes_by_counts, total_counts, pct_counts_mt
-        path_sample = Path(path_quant_qc_violin, f"sample_{sid}")
+        path_sample = Path(path_quant_qc_raw, f"sample_{sid}")
         util.check_and_create_folder(path_sample)
         for i, qc in enumerate(["n_genes_by_counts", "total_counts", "pct_counts_mt"]):
             with plt.rc_context():
@@ -188,6 +208,23 @@ def main(argv=None):
         sc.pp.filter_cells(adata_s, min_counts=args.min_counts)
         sc.pp.filter_genes(adata_s, min_cells=args.min_cells)
 
+        if args.max_counts > 0:
+            sc.pp.filter_cells(adata_s, max_counts=args.max_counts)
+        elif args.iqr_coef > 0:
+            q1 = np.percentile(adata_s.obs.total_counts.values, 25)
+            q3 = np.percentile(adata_s.obs.total_counts.values, 75)
+            upper_fence = q3 + args.iqr_coef*(q3 - q1)
+            sc.pp.filter_cells(adata_s, max_counts=upper_fence)
+        
+        if args.max_genes > 0:
+            sc.pp.filter_cells(adata_s, max_genes=args.max_genes)
+        # elif args.iqr_coef > 0:        
+        #     q1 = np.percentile(adata_s.obs.n_genes_by_counts.values, 25)
+        #     q3 = np.percentile(adata_s.obs.n_genes_by_counts.values, 75)
+        #     upper_fence = q3 + args.iqr_coef*(q3 - q1)
+        #     sc.pp.filter_cells(adata_s, max_genes=upper_fence)
+
+
         if args.quantile_upper < 1:
             upper_lim = np.quantile(adata_s.obs.n_genes_by_counts.values, args.quantile_upper)
             adata_s = adata_s[adata_s.obs.n_genes_by_counts.values < upper_lim]
@@ -199,12 +236,15 @@ def main(argv=None):
 
 
         # Doublet detection
-        if not args.not_find_doublets:
-            scrub = scr.Scrublet(adata_s.X, expected_doublet_rate=args.doublet_rate)
-            doublet_scores, predicted_doublets = scrub.scrub_doublets(min_counts=2, min_cells=3, min_gene_variability_pctl=85, n_prin_comps=30)
-            adata_s.obs['doublet_score'] = doublet_scores
-            adata_s.obs['predicted_doublet'] = predicted_doublets
-            adata_s.obs['predicted_doublet_1'] = [int(x) for x in predicted_doublets] # for ploting
+        if not args.keep_doublets:
+            try:
+                scrub = scr.Scrublet(adata_s.X, expected_doublet_rate=args.doublet_rate)
+                doublet_scores, predicted_doublets = scrub.scrub_doublets(min_counts=2, min_cells=3, min_gene_variability_pctl=85, n_prin_comps=30)
+                adata_s.obs['doublet_score'] = doublet_scores
+                adata_s.obs['predicted_doublet'] = predicted_doublets
+                adata_s.obs['predicted_doublet_1'] = [int(x) for x in predicted_doublets] # for ploting due to bugs in scanpy
+            except ValueError as e:
+                logger.warn(f"Failed to perform doublet detection due to error: {e}")
 
 
         # create summary csv file for all samples after filtering
@@ -229,6 +269,17 @@ def main(argv=None):
             obs2 = obs2[~obs2['predicted_doublet']]
         path_sample = Path(path_cell_filtering, f"sample_{sid}")
         util.check_and_create_folder(path_sample)
+
+        # violin plots for n_genes_by_counts, total_counts, pct_counts_mt
+        for i, qc in enumerate(["n_genes_by_counts", "total_counts", "pct_counts_mt"]):
+            with plt.rc_context():
+                sc.pl.violin(
+                    adata_s[~adata_s.obs['predicted_doublet']] if hasattr(adata_s.obs, 'predicted_doublet') else adata_s,
+                    [qc],
+                    jitter=0.4,
+                    show=False
+                )
+                plt.savefig(Path(path_sample, f'violin{i}_{qc}.png'), bbox_inches="tight")        
 
         hist_df = pd.concat([obs1[['n_genes_by_counts']], obs2[['n_genes_by_counts']]], axis=1)
         hist_df.columns = ['Before filtering', 'After filtering']

@@ -103,7 +103,8 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=None
     if not widths:
         widths = [1200//ncol]*ncol
 
-    if meta in ['sample', 'group']:
+    # if meta in ['sample', 'group']:
+    if meta:
         tabs = Tabs()
         for folder in sorted([f for f in path.iterdir() if f.is_dir()]):
             if folder.name.startswith(f'{meta}_'):

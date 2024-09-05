@@ -46,7 +46,7 @@ def parse_args(argv=None):
         # action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
-        "--doublets",
+        "--keep_doublets",
         help="Whether to filter out the cells called as doublets.",
         action='store_true',
     )       
@@ -90,8 +90,13 @@ def main(argv=None):
     if args.normalize:
         sc.pp.normalize_total(adata, target_sum=1e4)
         sc.pp.log1p(adata)
-    if not adata.uns['log1p']: # to comply with old version
+    if not adata.uns.get('log1p'): # to fix issue in scanpy function
         adata.uns['log1p'] = {'base': None}
+
+    # remove doublets before clustering
+    if not args.keep_doublets:
+        if hasattr(adata.obs, 'predicted_doublet'):
+            adata = adata[~adata.obs['predicted_doublet']]
 
 
     # Feature selection and dimensionality reduction
@@ -143,34 +148,42 @@ def main(argv=None):
     )
     sc.tl.umap(adata)
 
+    # perform clustering using Leiden graph-clustering method
+    for res in args.resolutions:
+        sc.tl.leiden(
+            adata, n_iterations=2, 
+            key_added=f"leiden_res_{res:4.2f}", resolution=res
+        )
+
     # save a filtered and normalized h5ad file
     adata.write_h5ad(Path(path_clustering, 'adata_clustering.h5ad'))
 
-    # remove doublets before clustering
-    if not args.doublets:
-        if hasattr(adata.obs, 'predicted_doublet'):
-            adata = adata[adata.obs['predicted_doublet']]
 
-    # perform clustering using Leiden graph-clustering method
+    
     # sc.tl.leiden(adata, flavor="igraph", n_iterations=2, resolution=args.resolution)
     for sid in adata.obs['sample'].unique():
         adata_s = adata[adata.obs['sample']==sid]   
         path_clustering_s = Path(path_clustering, f"sample_{sid}")
         util.check_and_create_folder(path_clustering_s)
-
         for res in args.resolutions:
-            sc.tl.leiden(
-                adata_s, n_iterations=2, 
-                key_added=f"leiden_res_{res:4.2f}", resolution=res
-            )
             with plt.rc_context():
                 sc.pl.umap(
                     adata_s,
                     color=[f"leiden_res_{res:4.2f}"],
-                    legend_loc="on data",
+                    # legend_loc="on data",
                     show=False
                 )
                 plt.savefig(Path(path_clustering_s, f"umap_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
+
+    
+    # stacked proportion bar plot showing all samples for each resolution      
+    for res in args.resolutions:
+        path_res = Path(path_clustering, f"resolution_{res:4.2f}")
+        util.check_and_create_folder(path_res)
+        with plt.rc_context():
+            prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs['sample'], normalize='columns').T.plot(kind='bar', stacked=True)
+            prop.legend(bbox_to_anchor=(1.2, 1.02),loc='upper right')
+            plt.savefig(Path(path_res, f"prop_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
 
 
 if __name__ == "__main__":

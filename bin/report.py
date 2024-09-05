@@ -126,11 +126,12 @@ def main(argv=None):
     # samples = samplesheet['sample'].unique()
 
     path_quant_qc = Path(args.results, 'qc_cell_filter')
-    path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
-    path_quant_qc_violin = Path(path_quant_qc, 'violin')
+    path_quant_qc_raw = Path(path_quant_qc, 'raw_counts')
+    # path_quant_qc_scatter = Path(path_quant_qc, 'scatter')
+    # path_quant_qc_violin = Path(path_quant_qc, 'violin')
     path_cell_filtering = Path(path_quant_qc, 'cell_filtering')
     # path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
-    path_clustering_samples = Path(args.results, 'clustering')
+    path_clustering = Path(args.results, 'clustering')
 
     # print(path_quant_qc) #tst
 
@@ -151,10 +152,10 @@ def main(argv=None):
             html.p("""The following scatter plot shows the relationship between total 
                    read counts and the number of genes, with the percentage of counts in 
                    mitochondrial genes indicated by color.""")
-            plots_from_image_files(path_quant_qc_scatter, meta='sample', widths=['800'])
+            plots_from_image_files(path_quant_qc_raw, meta='sample', widths=['800'], suffix=['scatter*.png'])
             html.p("""The following violin plots display the distribution of cells based on the number of 
                    genes, total counts, and the percentage of counts in mitochondrial genes.""")
-            plots_from_image_files(path_quant_qc_violin, meta='sample', ncol=3)
+            plots_from_image_files(path_quant_qc_raw, meta='sample', ncol=3, suffix=['violin*.png'])
     else:
         logger.info('Skipping Quantification QC')
 
@@ -169,6 +170,9 @@ def main(argv=None):
             html.p("""The following table shows summary statistics, with percentages in brackets 
                    indicating the comparison to the raw counts.""")
             DataTable.from_pandas(summary)
+            html.p("""The following violin plots display the distribution of cells based on the number of 
+                   genes, total counts, and the percentage of counts in mitochondrial genes after filtering.""")
+            plots_from_image_files(path_cell_filtering, meta='sample', ncol=3, suffix=['violin*.png'])            
             html.p("""The following plots show the distribution KDE curves before and after filtering 
                    for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")            
             plots_from_image_files(path_cell_filtering, meta='sample', ncol=2, suffix=['dist*.png'])
@@ -182,13 +186,17 @@ def main(argv=None):
         logger.info('Skipping Cell filtering')
 
 
-    if path_clustering_samples.exists():
+    if path_clustering.exists():
         with report.add_section('Clustering analysis', 'Clustering'):
             html.p("""This section shows clustering UMAP plots for each sample. The clustering 
                    was performed using Leiden graph-clustering method. The resolution parameter 
                    was set for different values to get different number of clusters which 
                    could match to biologically-meaningful cell types.""")
-            plots_from_image_files(path_clustering_samples, meta='sample', ncol=2)            
+            plots_from_image_files(path_clustering, meta='sample', ncol=2)
+            html.p("""The following plot shows a stacked bar chart that presents the proportions of clusters 
+                   across samples, calculated for each resolution value. The plot illustrates the distribution 
+                   profiles of predicted clusters between samples.""")                        
+            plots_from_image_files(path_clustering, meta='resolution')                    
     else:
         logger.info('Skipping Cell filtering')        
 
