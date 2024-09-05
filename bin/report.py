@@ -137,6 +137,7 @@ def main(argv=None):
 
     if path_quant_qc.exists():
         summary = pd.read_csv(Path(path_quant_qc, 'sample_summary.csv')).set_index('Sample ID')
+        Nsample = summary.shape[0]
         with report.add_section('Single cell summary', 'Summary'):
             html.p("""This section gives an overall summary of the single-cell count matrix for 
                    each sample. The statistics include the total number of cells with at least 
@@ -196,7 +197,7 @@ def main(argv=None):
             html.p("""The following plot shows a stacked bar chart that presents the proportions of clusters 
                    across samples, calculated for each resolution value. The plot illustrates the distribution 
                    profiles of predicted clusters between samples.""")                        
-            plots_from_image_files(path_clustering, meta='resolution')                    
+            plots_from_image_files(path_clustering, meta='resolution', widths=[str(min(Nsample*280, 1200))])                    
     else:
         logger.info('Skipping Cell filtering')        
 
