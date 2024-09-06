@@ -174,9 +174,9 @@ def main(argv=None):
             html.p("""The following violin plots display the distribution of cells based on the number of 
                    genes, total counts, and the percentage of counts in mitochondrial genes after filtering.""")
             plots_from_image_files(path_cell_filtering, meta='sample', ncol=3, suffix=['violin*.png'])            
-            html.p("""The following plots show the distribution KDE curves before and after filtering 
-                   for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")            
-            plots_from_image_files(path_cell_filtering, meta='sample', ncol=2, suffix=['dist*.png'])
+            # html.p("""The following plots show the distribution KDE curves before and after filtering 
+            #        for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")            
+            # plots_from_image_files(path_cell_filtering, meta='sample', ncol=2, suffix=['dist*.png'])
             html.p("""The following plots show the UMAP plots
                    for the number of genes, total counts, and the percentage of counts in mitochondrial genes.""")                        
             plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_total*.png'])

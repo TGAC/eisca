@@ -47,13 +47,13 @@ def parse_args(argv=None):
         "--min_genes",
         type=int,
         help="Filter cells by minimum number of genes.",
-        default=1,
+        default=100,
     )
     parser.add_argument(
         "--min_counts",
         type=int,
         help="Filter cells by minimum number of counts.",
-        default=750,
+        default=1,
     )
     parser.add_argument(
         "--max_genes",
@@ -106,7 +106,7 @@ def parse_args(argv=None):
         "--iqr_coef",
         type=float,
         help="Remove outliers which larger than iqr_coef*IQR in total_counts.",
-        default=1.5,
+        default=2,
     )                      
     return parser.parse_args(argv)
 
@@ -263,10 +263,10 @@ def main(argv=None):
 
 
         # distributions of n_genes_by_counts, total_counts and pct_counts_mt before and after filtering
-        obs1 = obs_raw   
-        obs2 = adata_s.obs.copy() 
-        if 'predicted_doublet' in obs2.columns:
-            obs2 = obs2[~obs2['predicted_doublet']]
+        # obs1 = obs_raw[obs_raw.n_genes_by_counts>0]   
+        # obs2 = adata_s.obs.copy() 
+        # if 'predicted_doublet' in obs2.columns:
+        #     obs2 = obs2[~obs2['predicted_doublet']]
         path_sample = Path(path_cell_filtering, f"sample_{sid}")
         util.check_and_create_folder(path_sample)
 
@@ -281,28 +281,32 @@ def main(argv=None):
                 )
                 plt.savefig(Path(path_sample, f'violin{i}_{qc}.png'), bbox_inches="tight")        
 
-        hist_df = pd.concat([obs1[['n_genes_by_counts']], obs2[['n_genes_by_counts']]], axis=1)
-        hist_df.columns = ['Before filtering', 'After filtering']
-        plot = sns.displot(data=hist_df, kind="kde",  fill=True, palette=sns.color_palette('bright'), aspect=1.2)
-        plot.set(xlabel='n_genes_by_counts')
-        plot.add_legend(loc="upper right")
-        plot.savefig(Path(path_sample, 'dist1_n_genes_by_counts.png'))
+        # hist_df = pd.concat([obs1[['n_genes_by_counts']], obs2[['n_genes_by_counts']]], axis=1)
+        # hist_df.columns = ['Before filtering', 'After filtering']
+        # plot = sns.displot(data=hist_df, kind="kde",  fill=True, palette=sns.color_palette('bright'), aspect=1.2)
+        # plot.set(xlabel='n_genes_by_counts')
+        # plot.ax.set_xlim(right=max(obs2['n_genes_by_counts']))
+        # plot.add_legend(loc="upper right")
+        # plot.savefig(Path(path_sample, 'dist1_n_genes_by_counts.png'))
 
-        hist_df = pd.concat([obs1[['total_counts']], obs2[['total_counts']]], axis=1)
-        hist_df.columns = ['Before filtering', 'After filtering']
-        plot = sns.displot(data=hist_df, kind="kde",  fill=True, palette=sns.color_palette('bright'), aspect=1.2)
-        plot.set(xlabel='total_counts')
-        plot.add_legend(loc="upper right")
-        plot.savefig(Path(path_sample, 'dist2_total_counts.png'))
+        # hist_df = pd.concat([obs1[['total_counts']], obs2[['total_counts']]], axis=1)
+        # hist_df.columns = ['Before filtering', 'After filtering']
+        # plot = sns.displot(data=hist_df, kind="kde",  fill=True, palette=sns.color_palette('bright'), aspect=1.2)
+        # plot.set(xlabel='total_counts')
+        # plot.ax.set_xlim(right=max(obs2['total_counts']))
+        # plot.add_legend(loc="upper right")
+        # plot.savefig(Path(path_sample, 'dist2_total_counts.png'))
 
-        hist_df = pd.concat([obs1[['pct_counts_mt']], obs2[['pct_counts_mt']]], axis=1)
-        hist_df.columns = ['Before filtering', 'After filtering']
-        plot = sns.displot(data=hist_df, kind="kde",  fill=True, palette=sns.color_palette('bright'), aspect=1.2)
-        plot.set(xlabel='pct_counts_mt')
-        plot.add_legend(loc="upper right")
-        plot.savefig(Path(path_sample, 'dist3_pct_counts_mt.png'))
+        # hist_df = pd.concat([obs1[['pct_counts_mt']], obs2[['pct_counts_mt']]], axis=1)
+        # hist_df.columns = ['Before filtering', 'After filtering']
+        # plot = sns.displot(data=hist_df, kind="kde",  fill=True, palette=sns.color_palette('bright'), aspect=1.2)
+        # plot.set(xlabel='pct_counts_mt')
+        # plot.ax.set_xlim(right=max(obs2['pct_counts_mt']))
+        # plot.add_legend(loc="upper right")
+        # plot.savefig(Path(path_sample, 'dist3_pct_counts_mt.png'))
 
-        # save a filtered and normalized h5ad file for a sample
+
+        # save a filtered and normalized h5ad file for each sample
         # adata_s.write_h5ad(Path(path_quant_qc, f'adata_filtered_normalized_{sid}.h5ad'))
 
         adatas[sid] = adata_s

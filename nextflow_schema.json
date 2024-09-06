@@ -355,6 +355,20 @@
         },
         "h5ad": {
             "type": "string"
+        },
+        "fasta": {
+            "type": "string"
+        },
+        "gtf": {
+            "type": "string"
+        },
+        "run_analyses": {
+            "type": "array",
+            "default": "['primary', 'secondary', 'tertiary']"
+        },
+        "skip_analyses": {
+            "type": "array",
+            "default": "[]"
         }
     }
 }

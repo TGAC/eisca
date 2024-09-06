@@ -181,8 +181,7 @@ def main(argv=None):
         path_res = Path(path_clustering, f"resolution_{res:4.2f}")
         util.check_and_create_folder(path_res)
         n_cluster = len(adata.obs[f'leiden_res_{res:4.2f}'].unique())+1
-        # ncol = n_cluster//16 + min(n_cluster%16, 1)
-        ncol = min(n_cluster//20, 3)
+        ncol = min((n_cluster//20 + min(n_cluster%20, 1)), 3)
         with plt.rc_context():
             prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs['sample'], normalize='columns').T.plot(kind='bar', stacked=True)
             prop.legend(bbox_to_anchor=(1+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
