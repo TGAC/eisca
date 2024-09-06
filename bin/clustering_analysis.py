@@ -180,9 +180,12 @@ def main(argv=None):
     for res in args.resolutions:
         path_res = Path(path_clustering, f"resolution_{res:4.2f}")
         util.check_and_create_folder(path_res)
+        n_cluster = len(adata.obs[f'leiden_res_{res:4.2f}'].unique())+1
+        # ncol = n_cluster//16 + min(n_cluster%16, 1)
+        ncol = min(n_cluster//20, 3)
         with plt.rc_context():
             prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs['sample'], normalize='columns').T.plot(kind='bar', stacked=True)
-            prop.legend(bbox_to_anchor=(1.2, 1.02),loc='upper right')
+            prop.legend(bbox_to_anchor=(1+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
             plt.savefig(Path(path_res, f"prop_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
 
 

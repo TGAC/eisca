@@ -26,7 +26,15 @@
                 "exists": true,
                 "pattern": "^\\S+\\.f(ast)?q\\.gz$",
                 "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
-            }
+            },
+            "merge": {
+                "type": "string",
+                "meta": ["merge"]
+            },
+            "group": {
+                "type": "string",
+                "meta": ["group"]
+            }                        
         },
         "required": ["sample", "fastq_1"]
     }
