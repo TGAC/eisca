@@ -49,15 +49,46 @@ TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
 | `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
 | `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 | `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
+| `merge` | Optional (to be implemented): Users can specify closely related samples to be merged without the integration process by assigning the same new name to those merged samples. |
+| `group` | Optional (to be implemented): Users can group a set of samples by assigning the same group name to those samples. Samples within the same group will be integrated into a single sample object for downstream analyses. |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+
+
+## Parameters
+
+The pipeline wutest has following parameters:
+
+| Parameter   | Description |
+| ----------- | ----------- |
+| --input  \<samplesheet.csv> | Input samplesheet file in CSV format |
+| --outdir \<directory> | Specify a output directory |
+| --analyses | Specify analysis phases in the pipeline. There are three analysis phases (see detailed explanation below): primary, secondary, and tertiary. Multiple phases can be applied and should be separated by commas. By default all analysis phases are applied and set as "primary,secondary,tertiary".   |
+| --skip \<string> | To skip one or multiple analyses, you can specify a set of analysis names separated by commas. e.g. "--skip fastqc" |
+| -profile \<config profile> | Specify a config profile to run the pipeline, which can be docker, singularity and conda |
+| --protocol \<string> | test |
+| --aligner \<string> | test |
+| --h5ad \<string> | test |
+| --genome \<string> | test |
+| --transcript_fasta \<string> | test |
+| --txp2gene \<string> | test |
+| --fasta \<string> | test |
+| --args_qccellfilter \<string> | Flagged argument settings for the QC_CELL_FILTER module, e.g. "--min_genes 50 --min_cells 1" |
+| --args_clustering \<string> | Flagged argument settings for the CLUSTERING_ANALYSIS module, e.g. "--regress --scale" |
+| --save_reference \<true/false> | A Boolean option, if set true the pipeline will save all the intermediate output files apart from end results, default is true |
+
+For example, following command-line will run the pipeline by skipping PICARD_MARKDUPLICATES and filtering out reads with mapping quality larger than 10.
+```bash
+nextflow run path-to/wutest --input samplesheet.csv --bed_file test.bed.gz --outdir results -profile docker --skip_picard true --samtools_view_args "-q 10"
+```
+
 
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/eisca --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
+nextflow run TGAC/eisca --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
