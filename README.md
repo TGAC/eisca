@@ -19,18 +19,18 @@
 
 ## Introduction
 
-**nf-core/eisca** is a bioinformatics pipeline that perform analysis for single-cell RNA-seq data. The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes (implemented and to be implemented) are as follows:
+**TGAC/eisca** is a bioinformatics pipeline that perform analysis for single-cell RNA-seq data. The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes (implemented and to be implemented) are as follows:
 
-- Primary analysis
+- **Primary analysis**
   - FastQC - Raw read QC
   - Kallisto & Bustools - Mapping & quantification by Kallisto & Bustools
   - Salmon Alevin - Mapping & quantification by Salmon Alevin
   - STARsolo - Mapping & quantification by STAR
-- Secondary analysis
+- **Secondary analysis**
   - QC & cell filtering - cell filtering and QC on raw data and filtered data
   - Clustering analysis - single-cell clustering analysis
   - Merging/integration of samples (to be implemented) 
-- Tertiary analysis
+- **Tertiary analysis**
   - Cell type annotation (to be implemented)
   - Differential expression analysis (to be implemented)
   - Trajectory & pseudotime analysis (to be implemented)
@@ -51,8 +51,8 @@
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+<!-- 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
+2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/)) -->
 
 ## Usage
 
