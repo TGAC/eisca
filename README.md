@@ -19,7 +19,27 @@
 
 ## Introduction
 
-**nf-core/eisca** is a bioinformatics pipeline that ...
+**nf-core/eisca** is a bioinformatics pipeline that perform analysis for single-cell RNA-seq data. The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes (implemented and to be implemented) are as follows:
+
+- Primary analysis
+  - FastQC - Raw read QC
+  - Kallisto & Bustools - Mapping & quantification by Kallisto & Bustools
+  - Salmon Alevin - Mapping & quantification by Salmon Alevin
+  - STARsolo - Mapping & quantification by STAR
+- Secondary analysis
+  - QC & cell filtering - cell filtering and QC on raw data and filtered data
+  - Clustering analysis - single-cell clustering analysis
+  - Merging/integration of samples (to be implemented) 
+- Tertiary analysis
+  - Cell type annotation (to be implemented)
+  - Differential expression analysis (to be implemented)
+  - Trajectory & pseudotime analysis (to be implemented)
+  - Other downstream analyses (to be implemented)
+- Pipeline reporting
+  - Analysis report - Single-ell Analysis Report.
+  - MultiQC - Aggregate report describing results and QC for tools registered in nf-core
+  - Pipeline information - Report metrics generated during the workflow execution
+
 
 <!-- TODO nf-core:
    Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
@@ -55,14 +75,32 @@ Each row represents a fastq file (single-end) or a pair of fastq files (paired e
 
 -->
 
+First, prepare a samplesheet with your input data that looks as follows:
+
+`samplesheet.csv`:
+
+```csv
+sample,fastq_1,fastq_2
+pbmc8k,pbmc8k_S1_L007_R1_001.fastq.gz,pbmc8k_S1_L007_R2_001.fastq.gz
+pbmc8k,pbmc8k_S1_L008_R1_001.fastq.gz,pbmc8k_S1_L008_R2_001.fastq.gz
+pbmc5k,pbmc5k_S1_L003_R1_001.fastq.gz,pbmc5k_S1_L003_R2_001.fastq.gz
+```
+
+Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+
+
 Now, you can run the pipeline using:
 
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
 ```bash
-nextflow run nf-core/eisca \
+nextflow run TGAC/eisca \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
+   --genome_fasta GRCm38.p6.genome.chr19.fa \
+   --gtf gencode.vM19.annotation.chr19.gtf \
+   --protocol 10XV2 \
+   --aligner <alevin/kallisto/star/cellranger/universc> \
    --outdir <OUTDIR>
 ```
 
@@ -70,13 +108,15 @@ nextflow run nf-core/eisca \
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/eisca/usage) and the [parameter documentation](https://nf-co.re/eisca/parameters).
+For more details and further functionality, please refer to the [usage documentation](https://github.com/TGAC/eisca/blob/master/docs/usage.md).
+<!-- (https://nf-co.re/eisca/usage). -->
 
 ## Pipeline output
 
 To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/eisca/results) tab on the nf-core website pipeline page.
 For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/eisca/output).
+[output documentation](https://github.com/TGAC/eisca/blob/master/docs/output.md).
+<!-- (https://nf-co.re/eisca/output). -->
 
 ## Credits
 

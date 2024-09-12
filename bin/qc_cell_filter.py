@@ -70,14 +70,14 @@ def parse_args(argv=None):
     parser.add_argument(
         "--min_cells",
         type=int,
-        help="Filter genes by upper quantile of number of genes.",
+        help="Filter genes by number of cells expressed.",
         default=3,
     )
     parser.add_argument(
         "--pct_mt",
         type=int,
         help="Filter genes by the maximum percentage of mitochondrial counts.",
-        default=35,
+        default=20,
     )
     parser.add_argument(
         "--doublet_rate",
@@ -99,7 +99,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--keep_doublets",
-        help="Whether to filter out the cells called as doublets.",
+        help="Whether to perform doublets prediction.",
         action='store_true',
     )
     parser.add_argument(
