@@ -149,6 +149,11 @@ def main(argv=None):
     util.check_and_create_folder(path_cell_filtering)
 
     samplesheet = pd.read_csv(args.samplesheet)
+    if hasattr(samplesheet, 'group'): # check if all samples assigned a group
+        if sum(samplesheet['group'].isna()) > 0:
+            logger.error(f"In the 'group' column, all samples must be assigned to a group.")
+            sys.exit(1)
+
     adata_raw = anndata.read_h5ad(args.h5ad)
     adata_raw.obs['sample'] = [x.removesuffix('_raw') for x in adata_raw.obs['sample']]
 
