@@ -7,8 +7,8 @@ process QC_CELL_FILTER {
         'biocontainers/scanpy-scripts:1.9.301--pyhdfd78af_0' }"
 
     input:
-    path(h5ad_raw)
-    // path samplesheet
+    path h5ad_raw
+    path samplesheet
 
     output:
     path "qc_cell_filter"
@@ -23,6 +23,7 @@ process QC_CELL_FILTER {
     """
     qc_cell_filter.py \\
         --h5ad ${h5ad_raw} \\
+        --samplesheet ${samplesheet} \\
         --outdir qc_cell_filter \\
         $args \\
 

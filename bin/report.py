@@ -30,13 +30,13 @@ def parse_args(argv=None):
         # epilog="python count_reads_from_bam.py --bam file.bam --bed file.bed --json output.json",
     )
     parser.add_argument("report", help="Report output file")
-    # parser.add_argument(
-    #     "--samplesheet",
-    #     metavar="FILE_SAMPLESHEET",
-    #     type=Path,
-    #     help="Input samplesheet file.",
-    #     required=True,
-    # )
+    parser.add_argument(
+        "--samplesheet",
+        metavar="SAMPLESHEET",
+        type=Path,
+        help="Input samplesheet file.",
+        required=True,
+    )
     parser.add_argument(
         "--results",
         metavar="RESULTS_DIR",
@@ -122,7 +122,9 @@ def main(argv=None):
     report.intro_content.add(EIBanner(report_title, workflow_name))
     report.footer.add(EILabsAddendum(workflow_name, args.wf_version))
 
-    # samplesheet = pd.read_csv(args.samplesheet)
+    samplesheet = pd.read_csv(args.samplesheet)
+    batch = 'group' if hasattr(samplesheet, 'group') else 'sample'
+    Nbatch = len(samplesheet[batch].unique())
     # samples = samplesheet['sample'].unique()
 
     path_quant_qc = Path(args.results, 'qc_cell_filter')
@@ -153,7 +155,7 @@ def main(argv=None):
             html.p("""The following scatter plot shows the relationship between total 
                    read counts and the number of genes, with the percentage of counts in 
                    mitochondrial genes indicated by color.""")
-            plots_from_image_files(path_quant_qc_raw, meta='sample', widths=['800'], suffix=['scatter*.png'])
+            plots_from_image_files(path_quant_qc_raw, meta='sample', widths=['800'], =['scatter*.png'])
             html.p("""The following violin plots display the distribution of cells based on the number of 
                    genes, total counts, and the percentage of counts in mitochondrial genes.""")
             plots_from_image_files(path_quant_qc_raw, meta='sample', ncol=3, suffix=['violin*.png'])
@@ -189,15 +191,15 @@ def main(argv=None):
 
     if path_clustering.exists():
         with report.add_section('Clustering analysis', 'Clustering'):
-            html.p("""This section shows clustering UMAP plots for each sample. The clustering 
+            html.p("""This section shows clustering UMAP plots for each {batch}. The clustering 
                    was performed using Leiden graph-clustering method. The resolution parameter 
                    was set for different values to get different number of clusters which 
                    could match to biologically-meaningful cell types.""")
-            plots_from_image_files(path_clustering, meta='sample', ncol=2)
+            plots_from_image_files(path_clustering, meta=batch, ncol=2)
             html.p("""The following plot shows a stacked bar chart that presents the proportions of clusters 
-                   across samples, calculated for each resolution value. The plot illustrates the distribution 
-                   profiles of predicted clusters between samples.""")                        
-            plots_from_image_files(path_clustering, meta='resolution', widths=[str(min(Nsample*280, 1200))])                    
+                   across {batch}s, calculated for each resolution value. The plot illustrates the distribution 
+                   profiles of predicted clusters between {batch}s.""")                        
+            plots_from_image_files(path_clustering, meta='resolution', widths=[str(min(Nbatch*280, 1200))])                    
     else:
         logger.info('Skipping Cell filtering')        
 

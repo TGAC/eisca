@@ -14,6 +14,7 @@ process MAKE_REPORT {
     // val  ready
     // path "versions.txt"
     path results
+    path samplesheet
     path multiqc_report // just for executing in the end of pipeline
     // path "params.json"
 
@@ -38,6 +39,7 @@ EOF
 
     report.py \\
         $report_name \\
+        --samplesheet ${samplesheet} \\ 
         --results ${results} \\
         --versions versions.txt \\
         --params params.json \\

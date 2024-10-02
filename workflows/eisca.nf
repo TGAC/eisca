@@ -214,6 +214,7 @@ workflow EISCA {
             path = [
                 'kallisto': "${params.outdir}/kallisto/mtx_conversions/combined_*_matrix.h5ad",
                 'alevin': "${params.outdir}/alevin/mtx_conversions/combined_*_matrix.h5ad"
+                'star': "${params.outdir}/star/mtx_conversions/combined_*_matrix.h5ad"
             ].get(params.aligner)
             ch_h5ad = Channel.fromPath(path)
         }else{
@@ -224,7 +225,8 @@ workflow EISCA {
 
         if (!params.skip_analyses.contains('qccellfilter')) {
             QC_CELL_FILTER (
-                ch_h5ad
+                ch_h5ad,
+                ch_samplesheet
                 // MTX_CONVERSION.out.h5ad
             )
             // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})

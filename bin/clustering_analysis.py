@@ -65,7 +65,13 @@ def parse_args(argv=None):
         type=util.floatlist,
         help="Resolution is used to control number of clusters.",
         default=[0.02, 0.05, 0.1, 0.5],
-    )              
+    )
+    parser.add_argument(
+        "--integrate",
+        default=None,
+        choices=['bbknn', 'harmony', 'scanorama'],
+        help="Choose a method for data integration",
+    )                      
     return parser.parse_args(argv)
 
 
@@ -137,6 +143,15 @@ def main(argv=None):
         svd_solver='arpack'
     )
 
+    # perform data integration
+    batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+    if args.integrate == 'bbknn':
+        sc.external.pp.bbknn(adata, batch_key=batch)
+    elif args.integrate == 'harmony':
+        sc.external.pp.harmony_integrate(adata, batch)
+    elif args.integrate == 'scanorama':
+        sc.external.pp.scanorama_integrate(adata, batch)
+        
     # find nearest neighbor graph constuction
     sc.pp.neighbors(
         adata, 
@@ -161,9 +176,9 @@ def main(argv=None):
 
     
     # sc.tl.leiden(adata, flavor="igraph", n_iterations=2, resolution=args.resolution)
-    for sid in adata.obs['sample'].unique():
-        adata_s = adata[adata.obs['sample']==sid]   
-        path_clustering_s = Path(path_clustering, f"sample_{sid}")
+    for sid in sorted(adata.obs[batch].unique()):
+        adata_s = adata[adata.obs[batch]==sid]   
+        path_clustering_s = Path(path_clustering, f"{batch}_{sid}")
         util.check_and_create_folder(path_clustering_s)
         for res in args.resolutions:
             with plt.rc_context():
@@ -183,7 +198,7 @@ def main(argv=None):
         n_cluster = len(adata.obs[f'leiden_res_{res:4.2f}'].unique())+1
         ncol = min((n_cluster//20 + min(n_cluster%20, 1)), 3)
         with plt.rc_context():
-            prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs['sample'], normalize='columns').T.plot(kind='bar', stacked=True)
+            prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True)
             prop.legend(bbox_to_anchor=(1+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
             plt.savefig(Path(path_res, f"prop_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
 

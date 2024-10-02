@@ -4,6 +4,7 @@
 import os
 
 os.environ["NUMBA_CACHE_DIR"] = "."
+os.environ[ 'MPLCONFIGDIR' ] = '/tmp/'
 
 import scanpy as sc, anndata as ad, pandas as pd
 from pathlib import Path

@@ -44,6 +44,12 @@ def parse_args(argv=None):
         required=True,
     )
     parser.add_argument(
+        "--sampesheet",
+        metavar="SAMPLESHEET",
+        type=Path,
+        help="Path to samplesheet file.",
+    )    
+    parser.add_argument(
         "--min_genes",
         type=int,
         help="Filter cells by minimum number of genes.",
@@ -107,7 +113,11 @@ def parse_args(argv=None):
         type=float,
         help="Remove outliers which larger than iqr_coef*IQR in total_counts.",
         default=2,
-    )                      
+    )
+    parser.add_argument(
+        "--mt",
+        default='MT-',
+        help="The prefix of mitochondrial gene IDs")                        
     return parser.parse_args(argv)
 
 
@@ -118,6 +128,10 @@ def main(argv=None):
     if not args.h5ad.is_file():
         logger.error(f"The given input file {args.h5ad} was not found!")
         sys.exit(2)
+
+    if not args.samplesheet.is_file():
+        logger.error(f"The given input file {args.samplesheet} was not found!")
+        sys.exit(2)        
 
     util.check_and_create_folder(args.outdir)
     # path_quant_qc = Path(args.outdir, 'quant_qc')
@@ -134,12 +148,15 @@ def main(argv=None):
     # util.check_and_create_folder(path_quant_qc_violin)
     util.check_and_create_folder(path_cell_filtering)
 
+    samplesheet = pd.read_csv(args.samplesheet)
     adata_raw = anndata.read_h5ad(args.h5ad)
+    adata_raw.obs['sample'] = [x.removesuffix('_raw') for x in adata_raw.obs['sample']]
+
     summary = []
     summary_filtered = []
-
     adatas = {}
-    for sid in adata_raw.obs['sample'].unique():
+    # for sid in adata_raw.obs['sample'].unique():
+    for sid in samplesheet['sample'].unique():
         adatas.update({sid: adata_raw[adata_raw.obs['sample']==sid]})     
 
     for sid, adata_s in adatas.items():
@@ -147,7 +164,7 @@ def main(argv=None):
         # import pdb; pdb.set_trace() #debug code
         # QC on raw counts
         # mitochondrial genes
-        adata_s.var["mt"] = adata_s.var_names.str.startswith("MT-")
+        adata_s.var["mt"] = adata_s.var_names.str.startswith(args.mt)
         # ribosomal genes
         adata_s.var["ribo"] = adata_s.var_names.str.startswith(("RPS", "RPL"))
         # hemoglobin genes
@@ -324,6 +341,11 @@ def main(argv=None):
     sc.pp.normalize_total(adata, target_sum=1e4)
     sc.pp.log1p(adata)
 
+    # merge samples with the name in column 'merge' if exists
+    if hasattr(samplesheet, 'merge') and sum(samplesheet['merge'].notna())>0:
+        ss1=samplesheet[samplesheet['merge'].notna()]
+        sample2merge = dict(zip(ss1['sample'], ss1['merge']))
+        adata.obs['sample'] = [sample2merge.get(x, x) for x in adata.obs['sample']]
 
     # save a filtered and normalized concated h5ad file
     adata.write_h5ad(Path(path_quant_qc, f'adata_filtered_normalized.h5ad'))
