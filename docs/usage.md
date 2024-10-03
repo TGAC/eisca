@@ -34,14 +34,14 @@ The pipeline will auto-detect whether a sample is single- or paired-end using th
 A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
 
 ```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
+sample,fastq_1,fastq_2,merge,group
+sampe_1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,,CONTROL
+sampe_2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz,,CONTROL
+sampe_3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz,,CONTROL
+sampe_4,AEG588A4_S4_L003_R1_001.fastq.gz,AEG588A4_S4_L003_R2_001.fastq.gz,,TREATMENT
+sampe_5,AEG588A5_S5_L003_R1_001.fastq.gz,AEG588A5_S5_L003_R2_001.fastq.gz,,TREATMENT
+sampe_6,AEG588A6_S6_L003_R1_001.fastq.gz,AEG588A6_S6_L003_R2_001.fastq.gz,sample_x,TREATMENT
+sampe_7,AEG588A6_S6_L004_R1_001.fastq.gz,AEG588A6_S6_L004_R2_001.fastq.gz,sample_x,TREATMENT
 ```
 
 | Column    | Description                                                                                                                                                                            |
@@ -49,8 +49,8 @@ TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
 | `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
 | `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 | `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `merge` | Optional (to be implemented): Users can specify closely related samples to be merged without the integration process by assigning the same new name to those merged samples. |
-| `group` | Optional (to be implemented): Users can group a set of samples by assigning the same group name to those samples. Samples within the same group will be integrated into a single sample object for downstream analyses. |
+| `merge` | Optional: Users can specify closely related samples to be merged without the integration process by assigning the same new name to those merged samples. |
+| `group` | Optional: Users can group a set of samples by assigning the same group name to those samples. Once the group column is added, all samples must be assigned to a group. |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
 
@@ -89,7 +89,7 @@ The pipline has 3 analysis phases:
    - Single-cell quality control
    - Cell filtering
    - Clustering analysis
-   - Merging/integration of samples (To be implemented)
+   - Merging/integration of samples
 3. **tertiary phase** inculdes analyses (To be implemented):    
    - Cell type annotation
    - Differential expression analysis
@@ -149,6 +149,7 @@ Users can set the options for cell filtering in the parameter `--args_qccellfilt
 | --iqr_coef  \<int> | Remove outliers which larger than iqr_coef*IQR in total_counts. (default=2) |
 | --doublet_rate  \<int> | The expected fraction of transcriptomes that are doublets.  (default=0.1)|
 | --keep_doublets  \<int> | Whether to perform doublets prediction |
+| --mt  \<string> | Specify a prefix of mitochondrial gene IDs. (default='MT-') |
 
 For example, `--args_qccellfilter "--min_genes 50 --pct_mt 20"`
 
@@ -160,8 +161,11 @@ Users can set the options for clustering analysis in the parameter `args_cluster
 | --keep_doublets | An switch of whether to filter out the cells called as doublets. (false by default)|
 | --regress | An switch of whether to regress out the variations from the total counts and the percentage of mitochondrial genes expressed. (false by default)|
 | --scale | An switch of whether to scale the expression to have zero mean and unit variance. (false by default)|
-| --resolutions <string> | Resolution is used to control number of clusters. (default="0.02,0.05,0.1,0.5")|
+| --resolutions \<string> | Resolution is used to control number of clusters. (default="0.02,0.05,0.1,0.5")|
+| --integrate \<[bbknn, harmony]> | Choose a method for data integration across samples. Currently two integration algorighms can be choosen: 'bbknn' - a fast and intuitive batch effect removal method focus on local structure; 'harmony' - a popular global correction approach that iteratively adjusts the embedding of cells in lower-dimensional space, which is effective at correcting large batch effects, especially in datasets with complex batch structures. (default=None)|
+| --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 
+For example, `--args_clustering "--integrate harmony"`
 
 ## Running the pipeline
 

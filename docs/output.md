@@ -127,7 +127,7 @@ For details on how to load these into R and perform further downstream analysis,
 
 **Output directory: `results/clustering`**
 - `adata_clustering.h5ad`: AnnData object file after clustering analysis.
-- `sample_*/`
+- `sample_*/` or `group_*/`
   - `umap_leiden_res_*.png`: UMAP plots showing clustering results with differnt resoultuion settings.
 - `resolution_*/`
   - `prop_leiden_res_*.png`: plot showing a stacked bar chart that presents the proportions of clusters across samples.

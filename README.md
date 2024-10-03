@@ -29,7 +29,7 @@
 - **Secondary analysis**
   - QC & cell filtering - cell filtering and QC on raw data and filtered data
   - Clustering analysis - single-cell clustering analysis
-  - Merging/integration of samples (to be implemented) 
+  - Merging/integration of samples 
 - **Tertiary analysis**
   - Cell type annotation (to be implemented)
   - Differential expression analysis (to be implemented)
