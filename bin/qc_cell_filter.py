@@ -44,7 +44,7 @@ def parse_args(argv=None):
         required=True,
     )
     parser.add_argument(
-        "--sampesheet",
+        "--samplesheet",
         metavar="SAMPLESHEET",
         type=Path,
         help="Path to samplesheet file.",
@@ -346,15 +346,6 @@ def main(argv=None):
     sc.pp.normalize_total(adata, target_sum=1e4)
     sc.pp.log1p(adata)
 
-    # merge samples with the name in column 'merge' if exists
-    if hasattr(samplesheet, 'merge') and sum(samplesheet['merge'].notna())>0:
-        ss1=samplesheet[samplesheet['merge'].notna()]
-        sample2merge = dict(zip(ss1['sample'], ss1['merge']))
-        adata.obs['sample'] = [sample2merge.get(x, x) for x in adata.obs['sample']]
-
-    # save a filtered and normalized concated h5ad file
-    adata.write_h5ad(Path(path_quant_qc, f'adata_filtered_normalized.h5ad'))
-
     # Feature selection and dimensionality reduction
     sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
     with plt.rc_context():
@@ -401,6 +392,21 @@ def main(argv=None):
                 show=False
             )
             plt.savefig(Path(path_cell_filtering_s, 'umap_total_counts_genes_mt.png'), bbox_inches="tight")    
+
+
+    # add group column in adata.obs
+    if hasattr(samplesheet, 'group'):
+        sample2group = dict(zip(samplesheet['sample'], samplesheet['group']))
+        adata.obs['group'] = [sample2group.get(x, x) for x in adata.obs['sample']]
+
+    # merge samples with the name in column 'merge' if exists
+    if hasattr(samplesheet, 'merge') and sum(samplesheet['merge'].notna())>0:
+        ss1=samplesheet[samplesheet['merge'].notna()]
+        sample2merge = dict(zip(ss1['sample'], ss1['merge']))
+        adata.obs['sample'] = [sample2merge.get(x, x) for x in adata.obs['sample']]
+
+    # save a filtered and normalized concated h5ad file
+    adata.write_h5ad(Path(path_quant_qc, f'adata_filtered_normalized.h5ad'))
 
 
 

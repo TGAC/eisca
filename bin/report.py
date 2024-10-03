@@ -31,13 +31,6 @@ def parse_args(argv=None):
     )
     parser.add_argument("report", help="Report output file")
     parser.add_argument(
-        "--samplesheet",
-        metavar="SAMPLESHEET",
-        type=Path,
-        help="Input samplesheet file.",
-        required=True,
-    )
-    parser.add_argument(
         "--results",
         metavar="RESULTS_DIR",
         type=Path,
@@ -84,7 +77,14 @@ def parse_args(argv=None):
     #     help="sample metadata")
     parser.add_argument(
         "--wf-version", default='unknown',
-        help="version of the executed workflow")               
+        help="version of the executed workflow")
+    parser.add_argument(
+        "--samplesheet",
+        metavar="SAMPLESHEET",
+        type=Path,
+        help="Input samplesheet file.",
+        required=True,
+    )           
     return parser.parse_args(argv)
 
 
@@ -155,7 +155,7 @@ def main(argv=None):
             html.p("""The following scatter plot shows the relationship between total 
                    read counts and the number of genes, with the percentage of counts in 
                    mitochondrial genes indicated by color.""")
-            plots_from_image_files(path_quant_qc_raw, meta='sample', widths=['800'], =['scatter*.png'])
+            plots_from_image_files(path_quant_qc_raw, meta='sample', widths=['800'], suffix=['scatter*.png'])
             html.p("""The following violin plots display the distribution of cells based on the number of 
                    genes, total counts, and the percentage of counts in mitochondrial genes.""")
             plots_from_image_files(path_quant_qc_raw, meta='sample', ncol=3, suffix=['violin*.png'])

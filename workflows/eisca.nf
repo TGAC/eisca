@@ -226,7 +226,7 @@ workflow EISCA {
         if (!params.skip_analyses.contains('qccellfilter')) {
             QC_CELL_FILTER (
                 ch_h5ad,
-                ch_samplesheet
+                Channel.fromPath(params.input)
                 // MTX_CONVERSION.out.h5ad
             )
             // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})

@@ -39,12 +39,12 @@ EOF
 
     report.py \\
         $report_name \\
-        --samplesheet ${samplesheet} \\ 
         --results ${results} \\
         --versions versions.txt \\
         --params params.json \\
         --wf-version ${workflow.manifest.version} \\
         --logo ${workflow.projectDir}/bin/images/EI_logo.png \\
+        --samplesheet ${samplesheet} \\          
 
 
     """

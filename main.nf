@@ -66,7 +66,7 @@ workflow NFCORE_EISCA {
         // GET_PARAMS()
         MAKE_REPORT (
             ch_results,
-            samplesheet,
+            Channel.fromPath(params.input),
             EISCA.out.multiqc_report,
             // EISCA.out.versions,
             // GET_PARAMS.out.json,

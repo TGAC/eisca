@@ -71,7 +71,13 @@ def parse_args(argv=None):
         default=None,
         choices=['bbknn', 'harmony', 'scanorama'],
         help="Choose a method for data integration",
-    )                      
+    )
+    parser.add_argument(
+        "--meta",
+        default='auto',
+        choices=['auto', 'sample', 'group'],
+        help="Choose a metadata column as the batch for clustering",
+    )                       
     return parser.parse_args(argv)
 
 
@@ -144,23 +150,33 @@ def main(argv=None):
     )
 
     # perform data integration
-    batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+    if args.meta == 'auto':
+        batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+    else:
+        batch = args.meta
     if args.integrate == 'bbknn':
-        sc.external.pp.bbknn(adata, batch_key=batch)
+        sc.external.pp.bbknn(adata, batch_key='sample')
     elif args.integrate == 'harmony':
-        sc.external.pp.harmony_integrate(adata, batch)
+        sc.external.pp.harmony_integrate(adata, 'sample')
     elif args.integrate == 'scanorama':
-        sc.external.pp.scanorama_integrate(adata, batch)
+        sc.external.pp.scanorama_integrate(adata, 'sample')
         
     # find nearest neighbor graph constuction
-    sc.pp.neighbors(
-        adata, 
-        n_neighbors=15, 
-        n_pcs=50,
-        knn=True, 
-        method='umap', 
-        metric='euclidean'
-    )
+    pca_rep = 'X_pca'
+    if args.integrate == 'harmony':
+        pca_rep = 'X_pca_harmony'
+    elif args.integrate == 'scanorama':
+        pca_rep = 'X_scanorama'
+    if args.integrate != 'bbknn':
+        sc.pp.neighbors(
+            adata, 
+            n_neighbors=15, 
+            n_pcs=50,
+            knn=True, 
+            method='umap', 
+            metric='euclidean',
+            use_rep=pca_rep
+        )
     sc.tl.umap(adata)
 
     # perform clustering using Leiden graph-clustering method
