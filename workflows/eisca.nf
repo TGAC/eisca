@@ -214,7 +214,7 @@ workflow EISCA {
             path = [
                 'kallisto': "${params.outdir}/kallisto/mtx_conversions/combined_*_matrix.h5ad",
                 'alevin': "${params.outdir}/alevin/mtx_conversions/combined_*_matrix.h5ad",
-                'star': "${params.outdir}/star/mtx_conversions/combined_*_matrix.h5ad"
+                'star': "${params.outdir}/star/mtx_conversions/combined_raw_matrix.h5ad"
             ].get(params.aligner)
             ch_h5ad = Channel.fromPath(path)
         }else{
