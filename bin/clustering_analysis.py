@@ -186,9 +186,8 @@ def main(argv=None):
             key_added=f"leiden_res_{res:4.2f}", resolution=res
         )
 
-    # save a filtered and normalized h5ad file
+    # save the AnnData into a h5ad file 
     adata.write_h5ad(Path(path_clustering, 'adata_clustering.h5ad'))
-
 
     
     # sc.tl.leiden(adata, flavor="igraph", n_iterations=2, resolution=args.resolution)

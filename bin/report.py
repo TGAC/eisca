@@ -134,6 +134,7 @@ def main(argv=None):
     path_cell_filtering = Path(path_quant_qc, 'cell_filtering')
     # path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
     path_clustering = Path(args.results, 'clustering')
+    path_annotation = Path(args.results, 'annotation')
 
     # print(path_quant_qc) #tst
 
@@ -191,17 +192,33 @@ def main(argv=None):
 
     if path_clustering.exists():
         with report.add_section('Clustering analysis', 'Clustering'):
-            html.p("""This section shows clustering UMAP plots for each {batch}. The clustering 
+            html.p(f"""This section shows clustering UMAP plots for each {batch}. The clustering 
                    was performed using Leiden graph-clustering method. The resolution parameter 
                    was set for different values to get different number of clusters which 
                    could match to biologically-meaningful cell types.""")
             plots_from_image_files(path_clustering, meta=batch, ncol=2)
-            html.p("""The following plot shows a stacked bar chart that presents the proportions of clusters 
+            html.p(f"""The following plot shows a stacked bar chart that presents the proportions of clusters 
                    across {batch}s, calculated for each resolution value. The plot illustrates the distribution 
                    profiles of predicted clusters between {batch}s.""")                        
             plots_from_image_files(path_clustering, meta='resolution', widths=[str(min(Nbatch*280, 1200))])                    
     else:
-        logger.info('Skipping Cell filtering')        
+        logger.info('Skipping clustering analysis')        
+
+
+    if path_annotation.exists():
+        with report.add_section('Cell-type annotation', 'Annotation'):
+            html.p(f"""This section presents cell-type annotation results using CellTypist which is an 
+            automated tool for cell type annotation based on pre-trained models, capable of accurately 
+            classifying different cell types and subtypes.""")
+            html.p("""The following UMAP plots show the predicted cell-type clusters and the mapped 
+            confidence scores of the cells.""")            
+            plots_from_image_files(path_annotation, meta=batch)
+            html.p(f"""The following plot shows a stacked bar chart that presents the proportions 
+                   of cell-type clusters across {batch}s. The plot illustrates the distribution 
+                   profiles of predicted cell-type clusters between {batch}s.""")                   
+            plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*280, 1200))])                    
+    else:
+        logger.info('Skipping Cell-type annotation')   
 
 
     report.write(args.report)

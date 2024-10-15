@@ -25,6 +25,7 @@ include { getGenomeAttribute                 } from '../subworkflows/local/utils
 
 include { QC_CELL_FILTER                    } from '../modules/local/qc_cell_filter'
 include { CLUSTERING_ANALYSIS               } from '../modules/local/clustering_analysis'
+include { ANNOTATE_CELLS                    } from '../modules/local/annotate_cells'
 // include { MAKE_REPORT                       } from '../modules/local/make_report'
 // include { GET_PARAMS                       } from '../modules/local/get_params'
 
@@ -231,7 +232,7 @@ workflow EISCA {
             )
             // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
             ch_versions = ch_versions.mix(QC_CELL_FILTER.out.versions)
-            ch_h5ad = QC_CELL_FILTER.out.h5ad_filtered         
+            ch_h5ad = QC_CELL_FILTER.out.h5ad         
         }
         
         if (!params.skip_analyses.contains('clustering')) {
@@ -244,6 +245,52 @@ workflow EISCA {
     }
 
 
+    //===================================== Tertiary anaysis stage =====================================
+
+    if (!params.analyses.intersect(['tertiary', 'annotation', 'ctmodel', 'dea', 'trajectory']).isEmpty()){
+    
+        // Get input h5ad file
+        ch_h5ad = Channel.empty()
+        if(params.analyses.contains('secondary')){
+            if (!params.skip_analyses.contains('clustering')) {
+                ch_h5ad = CLUSTERING_ANALYSIS.out.h5ad
+            }else {
+                ch_h5ad = QC_CELL_FILTER.out.h5ad
+            }
+        }else if(params.h5ad){
+            ch_h5ad = Channel.fromPath(params.h5ad)
+        }else{
+            path1 = "${params.outdir}/clustering/adata_clustering.h5ad"
+            path2 = "${params.outdir}/qc_cell_filter/adata_filtered_normalized.h5ad"
+            if(new File(path1).exists()){
+                ch_h5ad = Channel.fromPath(path1)
+            }else if(new File(path2).exists()){
+                ch_h5ad = Channel.fromPath(path2)
+            }else{
+                log.warn("For this analysis, h5ad file can be found in secondary analysis, please specify an h5ad file by setting --h5ad.")
+                return                
+            }
+        }
+
+        if (params.analyses.any{it=='tertiary' || it=='annotation'} and !params.skip_analyses.contains('annotation')) {
+            ANNOTATE_CELLS (
+                ch_h5ad,
+                Channel.fromPath(params.ctmodel)
+                // MTX_CONVERSION.out.h5ad
+            )
+            // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+            ch_versions = ch_versions.mix(QC_CELL_FILTER.out.versions)
+            // ch_h5ad = ANNOTATE_CELLS.out.h5ad      
+        }
+        
+        // if (!params.skip_analyses.contains('clustering')) {
+        //     CLUSTERING_ANALYSIS (
+        //         ch_h5ad
+        //     )
+        //     ch_versions = ch_versions.mix(CLUSTERING_ANALYSIS.out.versions)
+        // }   
+        
+    }
 
 
 

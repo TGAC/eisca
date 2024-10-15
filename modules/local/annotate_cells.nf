@@ -1,18 +1,18 @@
-process QC_CELL_FILTER {
+process ANNOTATE_CELLS {
     label 'process_medium'
 
     conda "conda-forge::scanpy conda-forge::python-igraph conda-forge::leidenalg"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/scanpy-scripts:1.9.301--pyhdfd78af_0' :
-        'biocontainers/scanpy-scripts:1.9.301--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/celltypist:1.6.3--pyhdfd78af_0' :
+        'teichlab/celltypist:latest' }"
 
     input:
-    path h5ad_raw
-    path samplesheet
+    path h5ad_filtered
+    path model_file optional true
 
     output:
-    path "qc_cell_filter"
-    path "qc_cell_filter/*.h5ad",  emit: h5ad
+    path "annotation"
+    path "annotation/*.h5ad",  emit: h5ad
     path "versions.yml",  emit: versions
 
     when:
@@ -21,10 +21,10 @@ process QC_CELL_FILTER {
     script:
     def args = task.ext.args ?: ''
     """
-    qc_cell_filter.py \\
-        --h5ad ${h5ad_raw} \\
-        --samplesheet ${samplesheet} \\
-        --outdir qc_cell_filter \\
+    annotate_cells.py \\
+        --h5ad ${h5ad_filtered} \\
+        --model_file ${model_file} \\
+        --outdir annotation \\
         $args \\
 
 
