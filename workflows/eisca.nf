@@ -247,7 +247,7 @@ workflow EISCA {
 
     //===================================== Tertiary anaysis stage =====================================
 
-    if (!params.analyses.intersect(['tertiary', 'annotation', 'ctmodel', 'dea', 'trajectory']).isEmpty()){
+    if (!params.analyses.intersect(['tertiary', 'annotation', 'dea', 'trajectory']).isEmpty()){
     
         // Get input h5ad file
         ch_h5ad = Channel.empty()
@@ -283,6 +283,7 @@ workflow EISCA {
             // ch_h5ad = ANNOTATE_CELLS.out.h5ad      
         }
         
+
         // if (!params.skip_analyses.contains('clustering')) {
         //     CLUSTERING_ANALYSIS (
         //         ch_h5ad
@@ -291,6 +292,22 @@ workflow EISCA {
         // }   
         
     }
+
+    // train cell-type models for CellTypist
+    if (params.analyses.contains('ctmodel') 
+        and !params.skip_analyses.contains('ctmodel') 
+        and params.h5ad) {
+            ch_h5ad = Channel.fromPath(params.h5ad, checkIfExists: true)
+            .ifEmpty { error 'The input AnnData file was not found!' }
+            TRAIN_CT_MODEL (
+                ch_h5ad,
+                // MTX_CONVERSION.out.h5ad
+            )
+            // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+            ch_versions = ch_versions.mix(QC_CELL_FILTER.out.versions)
+            // ch_h5ad = ANNOTATE_CELLS.out.h5ad      
+    }
+
 
 
 
