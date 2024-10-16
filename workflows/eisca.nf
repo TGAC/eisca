@@ -26,6 +26,7 @@ include { getGenomeAttribute                 } from '../subworkflows/local/utils
 include { QC_CELL_FILTER                    } from '../modules/local/qc_cell_filter'
 include { CLUSTERING_ANALYSIS               } from '../modules/local/clustering_analysis'
 include { ANNOTATE_CELLS                    } from '../modules/local/annotate_cells'
+include { TRAIN_CT_MODEL                    } from '../modules/local/train_ct_model'
 // include { MAKE_REPORT                       } from '../modules/local/make_report'
 // include { GET_PARAMS                       } from '../modules/local/get_params'
 
@@ -45,45 +46,46 @@ workflow EISCA {
 
     main:
 
-    protocol_config = Utils.getProtocol(workflow, log, params.aligner, params.protocol)
-    if (protocol_config['protocol'] == 'auto' && params.aligner !in ["cellranger", "cellrangerarc", "cellrangermulti"]) {
-        error "Only cellranger supports `protocol = 'auto'`. Please specify the protocol manually!"
-    }
-
-    ch_genome_fasta = params.fasta ? file(params.fasta, checkIfExists: true) : ( params.genome ? file( getGenomeAttribute('fasta'), checkIfExists: true ) : [] )
-    ch_gtf          = params.gtf   ? file(params.gtf  , checkIfExists: true) : ( params.genome ? file( getGenomeAttribute('gtf')  , checkIfExists: true ) : [] )
-
-    // general input and params
-    ch_transcript_fasta = params.transcript_fasta ? file(params.transcript_fasta): []
-    //ch_motifs = params.motifs ? file(params.motifs) : []
-    //ch_cellrangerarc_config = params.cellrangerarc_config ? file(params.cellrangerarc_config) : []
-    ch_txp2gene = params.txp2gene ? file(params.txp2gene) : []
-    ch_multiqc_files = Channel.empty()
-    if (params.barcode_whitelist) {
-        ch_barcode_whitelist = file(params.barcode_whitelist)
-    } else if (protocol_config.containsKey("whitelist")) {
-        ch_barcode_whitelist = file("$projectDir/${protocol_config['whitelist']}")
-    } else {
-        ch_barcode_whitelist = []
-    }
-
-
-    // samplesheet - this is passed to the MTX conversion functions to add metadata to the
-    // AnnData objects.
+    // samplesheet - this is passed to the MTX conversion functions to add metadata to the AnnData objects.
     ch_input = file(params.input)
 
-   //kallisto params
-    ch_kallisto_index = params.kallisto_index ? file(params.kallisto_index) : []
-    kb_workflow = params.kb_workflow
-    kb_t1c = params.kb_t1c ? file(params.kb_t1c) : []
-    kb_t2c = params.kb_t2c ? file(params.kb_t2c) : []
+    if (params.run_analyses.contains('primary')){
+        protocol_config = Utils.getProtocol(workflow, log, params.aligner, params.protocol)
+        if (protocol_config['protocol'] == 'auto' && params.aligner !in ["cellranger", "cellrangerarc", "cellrangermulti"]) {
+            error "Only cellranger supports `protocol = 'auto'`. Please specify the protocol manually!"
+        }
 
-    //salmon params
-    ch_salmon_index = params.salmon_index ? file(params.salmon_index) : []
+        ch_genome_fasta = params.fasta ? file(params.fasta, checkIfExists: true) : ( params.genome ? file( getGenomeAttribute('fasta'), checkIfExists: true ) : [] )
+        ch_gtf          = params.gtf   ? file(params.gtf  , checkIfExists: true) : ( params.genome ? file( getGenomeAttribute('gtf')  , checkIfExists: true ) : [] )
 
-    //star params
-    ch_star_index = params.star_index ? file(params.star_index) : []
-    star_feature = params.star_feature
+        // general input and params
+        ch_transcript_fasta = params.transcript_fasta ? file(params.transcript_fasta): []
+        //ch_motifs = params.motifs ? file(params.motifs) : []
+        //ch_cellrangerarc_config = params.cellrangerarc_config ? file(params.cellrangerarc_config) : []
+        ch_txp2gene = params.txp2gene ? file(params.txp2gene) : []
+        ch_multiqc_files = Channel.empty()
+        if (params.barcode_whitelist) {
+            ch_barcode_whitelist = file(params.barcode_whitelist)
+        } else if (protocol_config.containsKey("whitelist")) {
+            ch_barcode_whitelist = file("$projectDir/${protocol_config['whitelist']}")
+        } else {
+            ch_barcode_whitelist = []
+        }
+    
+
+        //kallisto params
+        ch_kallisto_index = params.kallisto_index ? file(params.kallisto_index) : []
+        kb_workflow = params.kb_workflow
+        kb_t1c = params.kb_t1c ? file(params.kb_t1c) : []
+        kb_t2c = params.kb_t2c ? file(params.kb_t2c) : []
+
+        //salmon params
+        ch_salmon_index = params.salmon_index ? file(params.salmon_index) : []
+
+        //star params
+        ch_star_index = params.star_index ? file(params.star_index) : []
+        star_feature = params.star_feature
+    }
 
 
     ch_versions = Channel.empty()
@@ -93,7 +95,7 @@ workflow EISCA {
     
     //===================================== Primary anaysis stage =====================================
 
-    if (params.analyses.contains('primary')){
+    if (params.run_analyses.contains('primary')){
     
         // MODULE: Run FastQC
         if (!params.skip_analyses.contains('fastqc')) {
@@ -200,14 +202,13 @@ workflow EISCA {
 
 
 
-
     //===================================== Secondary anaysis stage =====================================
 
-    if (params.analyses.contains('secondary')){
+    if (params.run_analyses.contains('secondary')){
     
         // MODULE: Run QC and cell filtering
         ch_h5ad = Channel.empty()
-        if(params.analyses.contains('primary')){
+        if(params.run_analyses.contains('primary')){
             ch_h5ad = MTX_CONVERSION.out.h5ad
         }else if(params.h5ad){
             ch_h5ad = Channel.fromPath(params.h5ad)
@@ -245,13 +246,14 @@ workflow EISCA {
     }
 
 
+
     //===================================== Tertiary anaysis stage =====================================
 
-    if (!params.analyses.intersect(['tertiary', 'annotation', 'dea', 'trajectory']).isEmpty()){
+    if (!params.run_analyses.intersect(['tertiary', 'annotation', 'dea', 'trajectory']).isEmpty()){
     
         // Get input h5ad file
         ch_h5ad = Channel.empty()
-        if(params.analyses.contains('secondary')){
+        if(params.run_analyses.contains('secondary')){
             if (!params.skip_analyses.contains('clustering')) {
                 ch_h5ad = CLUSTERING_ANALYSIS.out.h5ad
             }else {
@@ -272,14 +274,15 @@ workflow EISCA {
             }
         }
 
-        if (params.analyses.any{it=='tertiary' || it=='annotation'} and !params.skip_analyses.contains('annotation')) {
+        if (params.run_analyses.any{it=='tertiary' || it=='annotation'} and !params.skip_analyses.contains('annotation')) {
+            ch_ctmodel = params.ctmodel? Channel.fromPath(params.ctmodel) : []
             ANNOTATE_CELLS (
                 ch_h5ad,
-                Channel.fromPath(params.ctmodel)
+                ch_ctmodel
                 // MTX_CONVERSION.out.h5ad
             )
             // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-            ch_versions = ch_versions.mix(QC_CELL_FILTER.out.versions)
+            ch_versions = ch_versions.mix(ANNOTATE_CELLS.out.versions)
             // ch_h5ad = ANNOTATE_CELLS.out.h5ad      
         }
         
@@ -294,7 +297,7 @@ workflow EISCA {
     }
 
     // train cell-type models for CellTypist
-    if (params.analyses.contains('ctmodel') 
+    if (params.run_analyses.contains('ctmodel') 
         and !params.skip_analyses.contains('ctmodel') 
         and params.h5ad) {
             ch_h5ad = Channel.fromPath(params.h5ad, checkIfExists: true)
@@ -304,7 +307,7 @@ workflow EISCA {
                 // MTX_CONVERSION.out.h5ad
             )
             // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-            ch_versions = ch_versions.mix(QC_CELL_FILTER.out.versions)
+            ch_versions = ch_versions.mix(TRAIN_CT_MODEL.out.versions)
             // ch_h5ad = ANNOTATE_CELLS.out.h5ad      
     }
 

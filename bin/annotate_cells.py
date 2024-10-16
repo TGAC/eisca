@@ -4,6 +4,10 @@
 import os
 os.environ["NUMBA_CACHE_DIR"] = "."
 os.environ[ 'MPLCONFIGDIR' ] = '/tmp/'
+# os.mkdir('/.celltypist')
+# os.chmod('/.celltypist', 0o755)
+# os.environ['CELLTYPIST_PATH'] = '/.celltypist'
+# os.environ['CELLTYPIST_PATH'] = os.path.expanduser('~/.celltypist')
 
 import scanpy as sc
 import celltypist as ct
@@ -131,24 +135,23 @@ def main(argv=None):
         adata_s = adata[adata.obs[batch]==sid]   
         path_annotation_s = Path(path_annotation, f"{batch}_{sid}")
         util.check_and_create_folder(path_annotation_s)
-        for res in args.resolutions:
-            with plt.rc_context():
-                sc.pl.umap(
-                    adata_s,
-                    color=label_type,
-                    # legend_loc="on data",
-                    show=False
-                )
-                plt.savefig(Path(path_annotation_s, f"umap_cell_type.png"), bbox_inches="tight")    
+        with plt.rc_context():
+            sc.pl.umap(
+                adata_s,
+                color=label_type,
+                # legend_loc="on data",
+                show=False
+            )
+            plt.savefig(Path(path_annotation_s, f"umap_cell_type.png"), bbox_inches="tight")    
 
-            with plt.rc_context():
-                sc.pl.umap(
-                    adata_s,
-                    color='conf_score',
-                    # legend_loc="on data",
-                    show=False
-                )
-                plt.savefig(Path(path_annotation_s, f"umap_conf_score.png"), bbox_inches="tight")          
+        with plt.rc_context():
+            sc.pl.umap(
+                adata_s,
+                color='conf_score',
+                # legend_loc="on data",
+                show=False
+            )
+            plt.savefig(Path(path_annotation_s, f"umap_conf_score.png"), bbox_inches="tight")          
 
 
     # stacked proportion bar plot to compare between batches     

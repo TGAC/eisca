@@ -35,6 +35,7 @@ Python,3.9.18
 pandas,2.2.0
 scanpy,1.9.3 
 anndata,0.10.5.post1
+celltypist,1.6.3
 EOF
 
     report.py \\

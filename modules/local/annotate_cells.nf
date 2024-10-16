@@ -4,11 +4,11 @@ process ANNOTATE_CELLS {
     conda "conda-forge::scanpy conda-forge::python-igraph conda-forge::leidenalg"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/celltypist:1.6.3--pyhdfd78af_0' :
-        'teichlab/celltypist:latest' }"
+        'biocontainers/celltypist:1.6.3--pyhdfd78af_0' }"
 
     input:
     path h5ad_filtered
-    path model_file optional true
+    path model_file
 
     output:
     path "annotation"
@@ -20,6 +20,7 @@ process ANNOTATE_CELLS {
 
     script:
     def args = task.ext.args ?: ''
+    if(params.ctmodel)
     """
     annotate_cells.py \\
         --h5ad ${h5ad_filtered} \\
@@ -33,6 +34,20 @@ process ANNOTATE_CELLS {
         python: \$(python --version | sed 's/Python //g')
     END_VERSIONS        
     """
+    
+    else
+    """
+    annotate_cells.py \\
+        --h5ad ${h5ad_filtered} \\
+        --outdir annotation \\
+        $args \\
+
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+    END_VERSIONS        
+    """    
 
 
 

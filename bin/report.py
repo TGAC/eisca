@@ -212,11 +212,12 @@ def main(argv=None):
             classifying different cell types and subtypes.""")
             html.p("""The following UMAP plots show the predicted cell-type clusters and the mapped 
             confidence scores of the cells.""")            
-            plots_from_image_files(path_annotation, meta=batch)
+            plots_from_image_files(path_annotation, suffix=['umap_cell_type.png'], meta=batch, widths=['900'])
+            plots_from_image_files(path_annotation, suffix=['umap_conf_score.png'], meta=batch, widths=['700'])
             html.p(f"""The following plot shows a stacked bar chart that presents the proportions 
                    of cell-type clusters across {batch}s. The plot illustrates the distribution 
                    profiles of predicted cell-type clusters between {batch}s.""")                   
-            plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*280, 1200))])                    
+            plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*320, 1200))])                    
     else:
         logger.info('Skipping Cell-type annotation')   
 
