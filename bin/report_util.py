@@ -1,5 +1,5 @@
 
-from dominate.tags import div, h1, h4, p, code
+from dominate.tags import div, h1, h4, p, code, hr
 from dominate.tags import figure, img, a
 import base64
 from ezcharts.layout.snippets import DataTable, Grid, Tabs
@@ -9,6 +9,7 @@ from ezcharts.layout.base import IClasses, IStyles, Snippet
 from ezcharts.layout.snippets.banner import IBannerClasses, IBannerStyles, IBadgeClasses, IBadgeStyles, Badge
 from ezcharts.components.reports.labs import ILabsAddendumClasses
 from pathlib import Path
+import json
 
 
 
@@ -154,3 +155,17 @@ class EILogo(div):
             style="width: 35px; height: 35px;",
             className="d-flex",
             alt="EI Logo")
+        
+
+
+def show_analysis_parameters(params_file):
+    with open(params_file, 'r') as file:
+        # params = load_json(file)
+        params = json.load(file)
+        params = ' | '.join([f"{k} {v}" for k, v in params.items()])
+        # h4('About this report', className="pb-3")
+        p(
+            hr(),
+            "The analysis parameters: ", 
+            code(params)
+        )

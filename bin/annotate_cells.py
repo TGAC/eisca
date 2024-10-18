@@ -14,7 +14,7 @@ import celltypist as ct
 import pandas as pd
 from matplotlib import pyplot as plt
 import argparse
-import sys
+import sys, json
 from pathlib import Path
 import util
 
@@ -161,6 +161,22 @@ def main(argv=None):
         prop = pd.crosstab(adata.obs[label_type], adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True)
         prop.legend(bbox_to_anchor=(1.4+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
         plt.savefig(Path(path_annotation, f"prop_{label_type}.png"), bbox_inches="tight")    
+
+
+    # save analysis parameters into a json file
+    with open(Path(path_annotation, 'parameters.json'), 'w') as file:
+        params = {}
+        params.update({"--h5ad": str(args.h5ad)})        
+        if args.model_file: 
+            params.update({"--model_file": str(args.model_file)})
+        else:
+            params.update({"--model": args.model})   
+        params.update({"--mode": args.mode})        
+        params.update({"--p_thres": args.p_thres})        
+        params.update({"--meta": args.meta})        
+        if args.no_majority_voting: params.update({"--no_majority_voting": args.no_majority_voting})
+        if args.update_models: params.update({"--update_models": args.update_models})
+        json.dump(params, file, indent=4)
 
 
 

@@ -185,7 +185,8 @@ def main(argv=None):
             plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_total*.png'])
             if util.check_file(f"{path_cell_filtering}/sample_*", 'umap_doublet.png'):
                 html.p("""The following plots show the UMAP plots for the predicted doublets and doublet scores.""")                        
-                plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_doublet.png'])            
+                plots_from_image_files(path_cell_filtering, meta='sample', suffix=['umap_doublet.png'])
+            show_analysis_parameters(f"{path_quant_qc}/parameters.json")          
     else:
         logger.info('Skipping Cell filtering')
 
@@ -200,7 +201,8 @@ def main(argv=None):
             html.p(f"""The following plot shows a stacked bar chart that presents the proportions of clusters 
                    across {batch}s, calculated for each resolution value. The plot illustrates the distribution 
                    profiles of predicted clusters between {batch}s.""")                        
-            plots_from_image_files(path_clustering, meta='resolution', widths=[str(min(Nbatch*280, 1200))])                    
+            plots_from_image_files(path_clustering, meta='resolution', widths=[str(min(Nbatch*280, 1200))])
+            show_analysis_parameters(f"{path_clustering}/parameters.json")                   
     else:
         logger.info('Skipping clustering analysis')        
 
@@ -213,11 +215,12 @@ def main(argv=None):
             html.p("""The following UMAP plots show the predicted cell-type clusters and the mapped 
             confidence scores of the cells.""")            
             plots_from_image_files(path_annotation, suffix=['umap_cell_type.png'], meta=batch, widths=['900'])
-            plots_from_image_files(path_annotation, suffix=['umap_conf_score.png'], meta=batch, widths=['700'])
+            plots_from_image_files(path_annotation, suffix=['umap_conf_score.png'], meta=batch, widths=['600'])
             html.p(f"""The following plot shows a stacked bar chart that presents the proportions 
                    of cell-type clusters across {batch}s. The plot illustrates the distribution 
                    profiles of predicted cell-type clusters between {batch}s.""")                   
-            plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*320, 1200))])                    
+            plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*330, 1200))])
+            show_analysis_parameters(f"{path_annotation}/parameters.json")                 
     else:
         logger.info('Skipping Cell-type annotation')   
 

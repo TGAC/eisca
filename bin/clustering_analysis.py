@@ -12,7 +12,7 @@ from scipy import io
 import anndata
 from matplotlib import pyplot as plt
 import argparse
-import sys
+import sys, json
 from pathlib import Path
 import util
 
@@ -216,6 +216,21 @@ def main(argv=None):
             prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True)
             prop.legend(bbox_to_anchor=(1+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
             plt.savefig(Path(path_res, f"prop_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
+
+
+    # save analysis parameters into a json file
+    with open(Path(path_clustering, 'parameters.json'), 'w') as file:
+        params = {}
+        params.update({"--h5ad": str(args.h5ad)})        
+        params.update({"--resolutions": args.resolutions})        
+        if args.integrate: params.update({"--integrate": args.integrate})        
+        params.update({"--meta": args.meta})        
+        if args.normalize: params.update({"--normalize": args.normalize})
+        if args.regress: params.update({"--regress": args.regress})
+        if args.scale: params.update({"--scale": args.scale})
+        if args.keep_doublets: params.update({"--keep_doublets": args.keep_doublets})
+        json.dump(params, file, indent=4)
+
 
 
 if __name__ == "__main__":

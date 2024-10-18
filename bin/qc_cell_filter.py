@@ -408,6 +408,27 @@ def main(argv=None):
     # save a filtered and normalized concated h5ad file
     adata.write_h5ad(Path(path_quant_qc, f'adata_filtered_normalized.h5ad'))
 
+    # save analysis parameters into a json file
+    with open(Path(path_quant_qc, 'parameters.json'), 'w') as file:
+        params = {}
+        params.update({"--h5ad": str(args.h5ad)})        
+        params.update({"--samplesheet": str(args.samplesheet)})        
+        params.update({"--min_genes": args.min_genes})        
+        params.update({"--min_counts": args.min_counts})        
+        if args.max_genes > 0: params.update({"--max_genes": args.max_genes})
+        if args.max_counts > 0: params.update({"--max_counts": args.max_counts})        
+        params.update({"--min_cells": args.min_cells})        
+        params.update({"--pct_mt": args.pct_mt})        
+        if args.quantile_upper < 1: params.update({"--quantile_upper": args.quantile_upper})        
+        if args.quantile_lower > 0: params.update({"--quantile_lower": args.quantile_lower})        
+        params.update({"--iqr_coef": args.iqr_coef})        
+        params.update({"--mt": args.mt})
+        if not args.keep_doublets: 
+            params.update({"--doublet_rate": args.doublet_rate})
+        else:
+            params.update({"--keep_doublets": args.keep_doublets})
+        json.dump(params, file, indent=4)
+
 
 
 if __name__ == "__main__":
