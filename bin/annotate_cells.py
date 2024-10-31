@@ -108,7 +108,7 @@ def main(argv=None):
 
     # perform cell-type annotation
     # model = ct.models.Model.load(model = 'Immune_All_Low.pkl')
-    model = args.model_file if args.model_file else args.model
+    model = str(args.model_file) if args.model_file else args.model
     majority_voting = False if args.no_majority_voting else True
     predictions = ct.annotate(
         adata, 

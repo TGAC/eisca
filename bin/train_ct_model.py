@@ -66,15 +66,20 @@ def parse_args(argv=None):
         help="Number of CPUs used, by default all CPUs are used.",
     )                    
     parser.add_argument(
-        "--use_GPU",
-        help="Whether to use GPU for logistic classifier.",
-        action='store_true',
-    )
-    parser.add_argument(
         "--feature_selection",
         help="Whether to perform two-pass data training.",
         action='store_true',
-    )               
+    )
+    parser.add_argument(
+        "--use_SGD",
+        help="Whether to implement SGD learning for the logistic classifier.",
+        action='store_true',
+    )
+    parser.add_argument(
+        "--use_GPU",
+        help="Whether to use GPU for logistic classifier.",
+        action='store_true',
+    )                      
     return parser.parse_args(argv)
 
 
@@ -87,9 +92,9 @@ def main(argv=None):
         sys.exit(2)
 
     util.check_and_create_folder(args.outdir)
-    path_annotation = Path(args.outdir)
-    path_annotation_models = Path(path_annotation, "models")
-    util.check_and_create_folder(path_annotation_models)    
+    path_ctmodel = Path(args.outdir)
+    # path_annotation_models = Path(path_annotation, "models")
+    # util.check_and_create_folder(path_annotation_models)    
 
     adata = sc.read_h5ad(args.h5ad)
 
@@ -102,10 +107,11 @@ def main(argv=None):
         C=args.l2c,
         alpha=args.alpha,
         use_SGD=args.use_SGD,
+        use_GPU=args.use_GPU,
     )
 
     # save the model
-    new_model.write(Path(path_annotation_models, args.model_filename))
+    new_model.write(Path(path_ctmodel, args.model_filename))
 
 
 

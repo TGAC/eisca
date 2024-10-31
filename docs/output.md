@@ -18,9 +18,10 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Salmon Alevin](#salmon-alevin--alevinqc) - Mapping & quantification by Salmon Alevin
   - [STARsolo](#starsolo) - Mapping & quantification by STAR
 - [Secondary analysis](#secondary-analysis)
-  - [QC & cell filtering](#qc--cell-filtering) - cell filtering and QC on raw data and filtered data
-  - [Clustering analysis](#clustering-analysis) - single-cell clustering analysis
-- Tertiary analysis (to be implemented)
+  - [QC & cell filtering](#qc--cell-filtering) - Cell filtering and QC on raw data and filtered data
+  - [Clustering analysis](#clustering-analysis) - Single-cell clustering analysis
+- Tertiary analysis
+  - [Cell-type annotation analysis](#annotation-analysis) - Single-cell cell-type annotation analysis
 - [Pipeline reporting](#pipeline-reporting)
   - [Analysis report](#analysis-report) - Single-ell Analysis Report
   - [MultiQC](#multiqc) - Aggregate report describing results and QC for tools registered in nf-core
@@ -121,6 +122,7 @@ For details on how to load these into R and perform further downstream analysis,
   - `sample_*/`
     - `umap_total_counts_genes_mt.png`: UMAP plots for the number of genes, total counts, and the percentage of counts in mitochondrial genes.
     - `violin*.png`: violin plots display the distribution of cells based on the number of genes, total counts, and the percentage of counts in mitochondrial genes after cell filtering.
+- `parameters.json`: a JSON file containing the parameter settings in the analysis.
     
 
 ### <u>Clustering analysis</u>
@@ -130,8 +132,19 @@ For details on how to load these into R and perform further downstream analysis,
 - `sample_*/` or `group_*/`
   - `umap_leiden_res_*.png`: UMAP plots showing clustering results with differnt resoultuion settings.
 - `resolution_*/`
-  - `prop_leiden_res_*.png`: plot showing a stacked bar chart that presents the proportions of clusters across samples.
+  - `prop_leiden_res_*.png`: plot showing a stacked bar chart that presents the proportions of clusters across samples/groups.
+- `parameters.json`: a JSON file containing the parameter settings in the analysis.
 
+
+### <u>Annotation analysis</u>
+
+**Output directory: `results/annotation`**
+- `adata_annotation.h5ad`: AnnData object file after cell-type annotation analysis.
+- `sample_*/` or `group_*/`
+  - `umap_cell_type.png`: UMAP plots showing predicted cell-type clusters.
+  - `umap_conf_score.png`: UMAP plots showing mapped confidence scores of the cells.
+- `prop_majority_voting.png`: plot showing a stacked bar chart that presents the proportions of cell-type clusters across samples/groups.
+- `parameters.json`: a JSON file containing the parameter settings in the analysis.
 
 
 ## Pipeline reporting

@@ -297,11 +297,8 @@ workflow EISCA {
     }
 
     // train cell-type models for CellTypist
-    if (params.run_analyses.contains('ctmodel') 
-        and !params.skip_analyses.contains('ctmodel') 
-        and params.h5ad) {
-            ch_h5ad = Channel.fromPath(params.h5ad, checkIfExists: true)
-            .ifEmpty { error 'The input AnnData file was not found!' }
+    if (params.run_analyses.contains('ctmodel') and !params.skip_analyses.contains('ctmodel')) {
+            ch_h5ad = Channel.fromPath(params.h5ad)
             TRAIN_CT_MODEL (
                 ch_h5ad,
                 // MTX_CONVERSION.out.h5ad

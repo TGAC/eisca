@@ -74,8 +74,11 @@ The pipeline wutest has following parameters:
 | --txp2gene \<string> | test |
 | --fasta \<file> | Reference FASTA gnome file |
 | --gtf \<file> | Reference GTF annotation file |
+| --ctmodel \<file> | CellTypist model file for cell-type annotation analysis |
 | --args_qccellfilter \<string> | Flagged argument settings for the QC_CELL_FILTER module, e.g. "--min_genes 50 --min_cells 1" |
 | --args_clustering \<string> | Flagged argument settings for the CLUSTERING_ANALYSIS module, e.g. "--regress --scale" |
+| --args_annotation \<string> | Flagged argument settings for the ANNOTATE_CELLS module, e.g. "--model Immune_All_Low.pkl" |
+| --args_trainctmodel \<string> | Flagged argument settings for the TRAIN_CT_MODEL module, e.g. "--feature_selection" |
 | --save_reference \<true/false> | A Boolean option, if set true the pipeline will save all the intermediate output files apart from end results, default is true |
 
 
@@ -90,11 +93,11 @@ The pipline has 3 analysis phases:
    - Cell filtering
    - Clustering analysis
    - Merging/integration of samples
-3. **tertiary phase** inculdes analyses (To be implemented):    
+3. **tertiary phase** inculdes analyses:    
    - Cell type annotation
-   - Differential expression analysis
-   - Trajectory & pseudotime analysis
-   - Other downstream analyses
+   - Differential expression analysis (To be implemented)
+   - Trajectory & pseudotime analysis (To be implemented)
+   - Other downstream analyses (To be implemented)
 
 Users can run each analysis phase separately by specifying the parameter, e.g., `--analyses secondary`. If this parameter is used with the `--skip`, the specified analyses within the analysis phases will be skipped. 
 
@@ -166,6 +169,34 @@ Users can set the options for clustering analysis in the parameter `args_cluster
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 
 For example, `--args_clustering "--integrate harmony"`
+
+## Cell-type annotation analysis
+Users can set the options for cell-type annotation analysis in the parameter `--args_annotation`, which are as follows. 
+| Options   | Description |
+| ----------- | ----------- |
+| --model  \<string> | Specify a CellTypist model name, igored if a model file specified. (default='Immune_All_Low.pkl')|
+| --mode  \<[best match, prob match]> | The way cell prediction is performed. 'best match' is to choose the cell type with the largest score/probability as the final prediction. Setting to 'prob match' will enable a multi-label classification, which assigns 0 (i.e., unassigned), 1, or >=2 cell type labels to each query cell. (default='best match')|
+| --p_thres  \<float> | Probability threshold for the multi-label classification. Ignored if mode is 'best match'. (default=0.5) |
+| --no_majority_voting | An switch of whether to disable the majority voting classifier after over-clustering. |
+| --update_models | An switch of whether to update CellTypist models. |
+| --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
+
+For example, `--args_annotation "--model Immune_All_Low.pkl"`
+
+## Training CellTypist models 
+Users can set the options for training CellTypist models in the parameter `--args_trainctmodel`, which are as follows. 
+| Options   | Description |
+| ----------- | ----------- |
+| --model_filename  \<string> | Specify a CellTypist model name. (default='celltypist_model.pkl')|
+| --labels \<string> | Specify a column of cell-type from cell metadata of Anndata. (default='cell_type')|
+| --l2c  \<float> | Inverse of L2 regularization strength for traditional logistic classifier. A smaller value can possibly improve model generalization while at the cost of decreased accuracy. This argument is ignored if SGD learning is enabled. (default=1.0) |
+| --alpha  \<float> | L2 regularization strength for SGD logistic classifier. A larger value can possibly improve model generalization while at the cost of decreased accuracy. This argument is ignored if SGD learning is disabled. (default=0.0001) |
+| --n_jobs  \<int> | Number of CPUs used, by default all CPUs are used. |
+| --feature_selection | An switch of whether to perform two-pass data training where the first round is used for selecting important features/genes using SGD learning. If True, the training time will be longer. |
+| --use_SGD | An switch of whether to implement SGD learning for the logistic classifier. |
+| --use_GPU | An switch of whether to use GPU for logistic classifier. |
+
+For example, `--args_trainctmodel "--model_filename test_model.pkl --labels majority_voting --feature_selection"`
 
 ## Running the pipeline
 

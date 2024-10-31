@@ -31,7 +31,7 @@
   - Clustering analysis - single-cell clustering analysis
   - Merging/integration of samples 
 - **Tertiary analysis**
-  - Cell type annotation (to be implemented)
+  - Cell type annotation
   - Differential expression analysis (to be implemented)
   - Trajectory & pseudotime analysis (to be implemented)
   - Other downstream analyses (to be implemented)

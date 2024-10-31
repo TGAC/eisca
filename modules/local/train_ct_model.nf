@@ -10,8 +10,8 @@ process TRAIN_CT_MODEL {
     path h5ad_filtered
 
     output:
-    path "annotation"
-    path "annotation/models/*.pkl",  emit: model
+    path "ctmodel"
+    path "ctmodel/*.pkl",  emit: model
     path "versions.yml",  emit: versions
 
     when:
@@ -22,7 +22,7 @@ process TRAIN_CT_MODEL {
     """
     train_ct_model.py \\
         --h5ad ${h5ad_filtered} \\
-        --outdir annotation \\
+        --outdir ctmodel \\
         $args \\
 
 
