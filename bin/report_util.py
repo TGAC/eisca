@@ -10,6 +10,7 @@ from ezcharts.layout.snippets.banner import IBannerClasses, IBannerStyles, IBadg
 from ezcharts.components.reports.labs import ILabsAddendumClasses
 from pathlib import Path
 import json
+from PIL import Image
 
 
 
@@ -93,7 +94,7 @@ class EILabsAddendum(Snippet):
 
 
 
-def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=None):
+def plots_from_image_files(path, meta=None, ncol=1, suffix=['*.png'], widths=None):
     """Create a plots section which uses image files.
     PARAMS:
         meta: can be sample or group, by which images are shown in tabs
@@ -112,7 +113,7 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=None
                 sample_id = folder.name.split('_', 1)[1]
                 with tabs.add_tab(sample_id):
                     # pathes = [next(folder.glob('*'+sf)) for sf in suffix]
-                    pathes = sorted([file for sf in suffix for file in folder.glob('*'+sf) if file.is_file()])
+                    pathes = sorted([file for sf in suffix for file in folder.glob(sf) if file.is_file()])
                     Np = len(pathes)
                     widths = (widths*(Np//len(widths)+1))[0:Np]
                     for i in [r*ncol for r in range(Np//ncol+Np%ncol)]:
@@ -120,13 +121,16 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=None
                             pathes_r = [pathes[i+s] for s in range(ncol) if i+s < Np]
                             widths_r = [widths[i+s] for s in range(ncol) if i+s < Np]
                             for img_path, width in zip(pathes_r, widths_r):
+                                with Image.open(img_path) as image:
+                                    width_p, height_p = image.size
+                                    width = min(int(width), width_p)
                                 with open(img_path, 'rb') as fh:
                                     b64img = base64.b64encode(fh.read()).decode()
                                     with figure(cls='text-center'):
                                         img(src=f'data:image/png;base64,{b64img}', width=width)
                                         # a(img(src=f'data:image/png;base64,{b64img}', width=width), href=f'{img_path}')
     else:
-        pathes = sorted([file for sf in suffix for file in path.glob('*'+sf) if file.is_file()])
+        pathes = sorted([file for sf in suffix for file in path.glob(sf) if file.is_file()])
         Np = len(pathes)
         widths = (widths*(Np//len(widths)+1))[0:Np]
         for i in [r*ncol for r in range(Np//ncol+Np%ncol)]:        
@@ -134,6 +138,9 @@ def plots_from_image_files(path, meta=None, ncol=1, suffix=['.png'], widths=None
                 pathes_r = [pathes[i+s] for s in range(ncol) if i+s < Np]
                 widths_r = [widths[i+s] for s in range(ncol) if i+s < Np]
                 for img_path, width in zip(pathes_r, widths_r):
+                    with Image.open(img_path) as image:
+                        width_p, height_p = image.size
+                        width = min(int(width), width_p)                    
                     with open(img_path, 'rb') as fh:
                         b64img = base64.b64encode(fh.read()).decode()
                         with figure(cls='text-center'):

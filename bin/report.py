@@ -124,7 +124,7 @@ def main(argv=None):
 
     samplesheet = pd.read_csv(args.samplesheet)
     batch = 'group' if hasattr(samplesheet, 'group') else 'sample'
-    Nbatch = len(samplesheet[batch].unique())
+    # Nbatch = len(samplesheet[batch].unique())
     # samples = samplesheet['sample'].unique()
 
     path_quant_qc = Path(args.results, 'qc_cell_filter')
@@ -135,6 +135,7 @@ def main(argv=None):
     # path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
     path_clustering = Path(args.results, 'clustering')
     path_annotation = Path(args.results, 'annotation')
+    path_dea = Path(args.results, 'dea')
 
     # print(path_quant_qc) #tst
 
@@ -192,6 +193,11 @@ def main(argv=None):
 
 
     if path_clustering.exists():
+        if util.check_file(f"{path_clustering}/sample_*", ''):
+            batch = 'sample'
+        elif util.check_file(f"{path_clustering}/group_*", ''):
+            batch = 'group'
+        Nbatch = len(samplesheet[batch].unique())      
         with report.add_section('Clustering analysis', 'Clustering'):
             html.p(f"""This section shows clustering UMAP plots for each {batch}. The clustering 
                    was performed using Leiden graph-clustering method. The resolution parameter 
@@ -208,6 +214,11 @@ def main(argv=None):
 
 
     if path_annotation.exists():
+        if util.check_file(f"{path_annotation}/sample_*", ''):
+            batch = 'sample'
+        elif util.check_file(f"{path_annotation}/group_*", ''):
+            batch = 'group'
+        Nbatch = len(samplesheet[batch].unique())
         with report.add_section('Cell-type annotation', 'Annotation'):
             html.p(f"""This section presents cell-type annotation results using CellTypist which is an 
             automated tool for cell type annotation based on pre-trained models, capable of accurately 
@@ -222,7 +233,41 @@ def main(argv=None):
             plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*330, 1200))])
             show_analysis_parameters(f"{path_annotation}/parameters.json")                 
     else:
-        logger.info('Skipping Cell-type annotation')   
+        logger.info('Skipping cell-type annotation')   
+
+
+    if path_dea.exists():
+        if util.check_file(f"{path_dea}/sample_*", ''):
+            batch = 'sample'
+        elif util.check_file(f"{path_dea}/group_*", ''):
+            batch = 'group'        
+        with report.add_section('Differential expression analysis', 'DEA'):
+            html.p("""This section presents the results of the differentially expression analysis using Scanpy's 
+                   rank_genes_groups function. These results allow users to identify marker genes by comparing 
+                   the ranked genes of one cluster against all others, as well as to explore differentially 
+                   expressed genes between two conditions.""")
+
+            # showing plots for DEA between conditions for all cells
+            if util.check_file(f"{path_dea}", '*.png'):
+                html.p("""The following plots show differentially expressed genes between the two conditions.""")                        
+                plots_from_image_files(path_dea, suffix=['plot_genes_*.png'])
+                plots_from_image_files(path_dea, suffix=['dotplot_genes_*.png'])
+
+            # showing plots for DEA between conditions for each celltype
+            if util.check_file(f"{path_dea}/celltype_*", '*.png'):
+                html.p("""The following plots show differentially expressed genes between two conditions across various cell types/clusters.""")                        
+                plots_from_image_files(path_dea, meta='celltype', suffix=['plot_genes_*.png'])
+                plots_from_image_files(path_dea, meta='celltype', suffix=['dotplot_genes_*.png'])
+
+            # showing plots for one cluster vs rest for each sample/group
+            if util.check_file(f"{path_dea}/{batch}_*", '*.png'):
+                html.p(f"""The following plots display the ranking of genes for one of the cell clusters against the rest of the clusters across {batch}s.""")                        
+                plots_from_image_files(path_dea, meta=batch, suffix=['plot_genes_*.png'])
+                plots_from_image_files(path_dea, meta=batch, suffix=['dotplot_genes_*.png'])
+
+            show_analysis_parameters(f"{path_dea}/parameters.json")                 
+    else:
+        logger.info('Skipping differential expression analysis')
 
 
     report.write(args.report)
