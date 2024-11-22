@@ -57,7 +57,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--method",
         default='t-test',
-        choices=['t-test', 'wilcoxon', 'logreg'],
+        choices=['t-test', 'wilcoxon', 'logreg', 't-test_overestim_var'],
         help="Choose a test method for differential expression anlaysis.",
     )
     parser.add_argument(
@@ -75,12 +75,12 @@ def parse_args(argv=None):
     parser.add_argument(
         "--celltype_col",
         default=None,
-        help="If spcecify a column used to define cell-types for DEA between groups.",
+        help="Spcecify a column used to define cell-types for DEA between groups.",
     )
     parser.add_argument(
         "--celltypes",
         default='all',
-        help="If spcecify a list cell-types for DEA between groups, e.g. 'cluster1,cluster2'.",
+        help="Spcecify a list cell-types for DEA between groups, e.g. 'celltype1,celltype2'.",
     )                       
     return parser.parse_args(argv)
 

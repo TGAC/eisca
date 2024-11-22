@@ -75,10 +75,11 @@ The pipeline wutest has following parameters:
 | --fasta \<file> | Reference FASTA gnome file |
 | --gtf \<file> | Reference GTF annotation file |
 | --ctmodel \<file> | CellTypist model file for cell-type annotation analysis |
-| --args_qccellfilter \<string> | Flagged argument settings for the QC_CELL_FILTER module, e.g. "--min_genes 50 --min_cells 1" |
-| --args_clustering \<string> | Flagged argument settings for the CLUSTERING_ANALYSIS module, e.g. "--regress --scale" |
-| --args_annotation \<string> | Flagged argument settings for the ANNOTATE_CELLS module, e.g. "--model Immune_All_Low.pkl" |
-| --args_trainctmodel \<string> | Flagged argument settings for the TRAIN_CT_MODEL module, e.g. "--feature_selection" |
+| --args_qccellfilter \<string> | Flagged argument settings for the process of Cell filtering and QC, e.g. "--min_genes 50 --min_cells 1" |
+| --args_clustering \<string> | Flagged argument settings for the process of clustering analysis, e.g. "--regress --scale" |
+| --args_annotation \<string> | Flagged argument settings for the process of cell-type annotation analysis, e.g. "--model Immune_All_Low.pkl" |
+| --args_trainctmodel \<string> | Flagged argument settings for the process of training CellTypist models, e.g. "--feature_selection" |
+| --args_dea \<string> | Flagged argument settings for the process of differential expression analysis, e.g. "--groupby leiden_res_0.50" |
 | --save_reference \<true/false> | A Boolean option, if set true the pipeline will save all the intermediate output files apart from end results, default is true |
 
 
@@ -95,7 +96,7 @@ The pipline has 3 analysis phases:
    - Merging/integration of samples
 3. **tertiary phase** inculdes analyses:    
    - Cell type annotation
-   - Differential expression analysis (To be implemented)
+   - Differential expression analysis
    - Trajectory & pseudotime analysis (To be implemented)
    - Other downstream analyses (To be implemented)
 
@@ -156,6 +157,7 @@ Users can set the options for cell filtering in the parameter `--args_qccellfilt
 
 For example, `--args_qccellfilter "--min_genes 50 --pct_mt 20"`
 
+
 ## Clustering analysis
 Users can set the options for clustering analysis in the parameter `args_clustering`, which are as follows. 
 | Options   | Description |
@@ -170,6 +172,7 @@ Users can set the options for clustering analysis in the parameter `args_cluster
 
 For example, `--args_clustering "--integrate harmony"`
 
+
 ## Cell-type annotation analysis
 Users can set the options for cell-type annotation analysis in the parameter `--args_annotation`, which are as follows. 
 | Options   | Description |
@@ -182,6 +185,7 @@ Users can set the options for cell-type annotation analysis in the parameter `--
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 
 For example, `--args_annotation "--model Immune_All_Low.pkl"`
+
 
 ## Training CellTypist models 
 Users can set the options for training CellTypist models in the parameter `--args_trainctmodel`, which are as follows. 
@@ -197,6 +201,26 @@ Users can set the options for training CellTypist models in the parameter `--arg
 | --use_GPU | An switch of whether to use GPU for logistic classifier. |
 
 For example, `--args_trainctmodel "--model_filename test_model.pkl --labels majority_voting --feature_selection"`
+
+
+## Differential expression analysis
+Users can set the options for differential analysis in the parameter `--args_dea`, which are as follows. 
+| Options   | Description |
+| ----------- | ----------- |
+| --groupby  \<string> | Specify a column of the observation table to define groups. (default='leiden') |
+| --groups  \<string> | Specify a subset of groups, e.g. 'group1,group2'. By defualt, all groups are chosen. (default='all') |
+| --reference  \<string> | Users can spcecify a group name as reference, and all other groups will be comapred against with this group. By default each group will be compared against rest of groups. (default='rest') |
+| --method  \<['t-test', 'wilcoxon', 'logreg', 't-test_overestim_var']> | Choose a test method for differential expression anlaysis. The default method is 't-test', 't-test_overestim_var' overestimates variance of each group, 'wilcoxon' uses Wilcoxon rank-sum, 'logreg' uses logistic regression. (default='t-test')|
+| --n_genes  \<int> | Number of top marker genes to show in plots. (default=20) |
+| --celltype_col \<string> | Spcecify a column of the observation table to define cell-types, and DEA will be performed between groups for each cell-type. |
+| --celltypes \<string> | Spcecify a subset of cell-types for DEA between groups, e.g. 'celltype1,celltype2'. By default all cell-types are used. (default='all') |
+| --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
+
+For example:  
+`--args_dea "--groupby leiden_res_0.50"` - perform DEA to find marker genes for each cluster against the rest using clusters defined in column 'leiden_res_0.50' at group level if 'group' is defined in the samplesheet. Applying `--meta sample` to perform DEA at sample level.  
+`--args_dea "--groupby group --reference control"` - perform DEA to find DE genes between each group against the group 'control', groups are defined in column 'group'.  
+`--args_dea "--groupby group --reference control --celltype_col majority_voting"` - same as above but for each cell-type defined in column 'majority_voting'.
+
 
 ## Running the pipeline
 

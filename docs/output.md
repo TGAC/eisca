@@ -22,6 +22,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Clustering analysis](#clustering-analysis) - Single-cell clustering analysis
 - Tertiary analysis
   - [Cell-type annotation analysis](#annotation-analysis) - Single-cell cell-type annotation analysis
+  - [Differential expression analysis](#dea-analysis) - Single-cell differential expression analysis
 - [Pipeline reporting](#pipeline-reporting)
   - [Analysis report](#analysis-report) - Single-ell Analysis Report
   - [MultiQC](#multiqc) - Aggregate report describing results and QC for tools registered in nf-core
@@ -144,6 +145,17 @@ For details on how to load these into R and perform further downstream analysis,
   - `umap_cell_type.png`: UMAP plots showing predicted cell-type clusters.
   - `umap_conf_score.png`: UMAP plots showing mapped confidence scores of the cells.
 - `prop_majority_voting.png`: plot showing a stacked bar chart that presents the proportions of cell-type clusters across samples/groups.
+- `parameters.json`: a JSON file containing the parameter settings in the analysis.
+
+
+### <u>DEA analysis</u>
+
+**Output directory: `results/dea`**
+- `adata_annotation.h5ad`: AnnData object file after cell-type annotation analysis.
+- `sample_*/` or `group_*/` or `celltype_*/` (no subfolder for DEA betweeen groups)
+  - `plot_genes_*.png`: plots showing top number of DE genes across groups.
+  - `dotplot_genes_*.png`: dot plot showing top number of DE genes across groups.
+  - `dea_*.csv`: a csv table file showing DEA results for all genes, e.g. log fold change, p-values.
 - `parameters.json`: a JSON file containing the parameter settings in the analysis.
 
 
