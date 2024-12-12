@@ -136,7 +136,7 @@ workflow EISCA {
 
 
         // Trimming reads
-        if (params.trimming) {
+        if (params.trim) {
             TRIMGALORE (ch_samplesheet)
             ch_samplesheet = TRIMGALORE.out.reads
             ch_versions = ch_versions.mix(TRIMGALORE.out.versions)
