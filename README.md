@@ -23,6 +23,7 @@
 
 - **Primary analysis**
   - FastQC - Raw read QC
+  - TrimGalore - Adapter and quality trimming to FastQ files
   - Kallisto & Bustools - Mapping & quantification by Kallisto & Bustools
   - Salmon Alevin - Mapping & quantification by Salmon Alevin
   - STARsolo - Mapping & quantification by STAR
@@ -35,7 +36,7 @@
   - Differential expression analysis
   - Trajectory & pseudotime analysis (to be implemented)
   - Other downstream analyses (to be implemented)
-- Pipeline reporting
+- **Pipeline reporting**
   - Analysis report - Single-ell Analysis Report.
   - MultiQC - Aggregate report describing results and QC for tools registered in nf-core
   - Pipeline information - Report metrics generated during the workflow execution

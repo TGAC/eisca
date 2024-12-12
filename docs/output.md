@@ -14,6 +14,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 - [Primary analysis](#primary-analysis)
   - [FastQC](#fastqc) - Raw read QC
+  - [TrimGalore](#trimgalore) - Adapter and quality trimming to FastQ files
   - [Kallisto & Bustools](#kallisto--bustools) - Mapping & quantification by Kallisto & Bustools
   - [Salmon Alevin](#salmon-alevin--alevinqc) - Mapping & quantification by Salmon Alevin
   - [STARsolo](#starsolo) - Mapping & quantification by STAR
@@ -52,6 +53,13 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 :::note
 The FastQC plots displayed in the MultiQC report shows _untrimmed_ reads. They may contain adapter sequence and potentially regions with low quality.
 :::
+
+### <u>TrimGalore</u>
+
+**Output directory: `results/trimgalore`**
+- `*.fastq.gz_trimming_report.txt`: TrimGlore report showing statistics after trimming such as number of trimmed reads.
+- `*_1_val_1.fq.gz`: Zip archive containing the FastQC file for paired-end forward reads.
+- `*_2_val_2.fq.gz`: Zip archive containing the FastQC file for paired-end reverse reads.
 
 
 ### <u>Kallisto & Bustools</u>
