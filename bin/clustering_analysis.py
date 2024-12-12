@@ -75,7 +75,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--meta",
         default='auto',
-        choices=['auto', 'sample', 'group'],
+        choices=['auto', 'sample', 'group', 'plate'],
         help="Choose a metadata column as the batch for clustering",
     )                       
     return parser.parse_args(argv)
@@ -110,6 +110,7 @@ def main(argv=None):
         if hasattr(adata.obs, 'predicted_doublet'):
             adata = adata[~adata.obs['predicted_doublet']]
 
+    batch_key = 'plate' if hasattr(adata.obs, 'plate') else 'sample' # correct on plates for smart-seq data
 
     # Feature selection and dimensionality reduction
     sc.pp.highly_variable_genes(
@@ -120,7 +121,7 @@ def main(argv=None):
         min_disp=0.5, 
         max_disp=50, 
         n_bins=20, 
-        batch_key="sample"
+        batch_key=batch_key
     )
     #sc.pp.highly_variable_genes(adata, n_top_genes=2000, batch_key="sample")
 
@@ -141,9 +142,10 @@ def main(argv=None):
         sc.pp.scale(adata, max_value=10)
 
     # Dimensionality reduction
+    n_comps = min((min(adata.X.shape)-1), 50)
     sc.tl.pca(
         adata, 
-        n_comps=50, 
+        n_comps=n_comps, 
         chunked=False,
         zero_center=False, 
         svd_solver='arpack'
@@ -151,15 +153,22 @@ def main(argv=None):
 
     # perform data integration
     if args.meta == 'auto':
-        batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+        # batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+        batch = 'sample'
+        if hasattr(adata.obs, 'group'):
+            batch = 'group'
+        elif hasattr(adata.obs, 'plate'):
+            batch = 'plate' 
     else:
         batch = args.meta
+    
+    n_pcs = adata.obsm['X_pca'].shape[1]
     if args.integrate == 'bbknn':
-        sc.external.pp.bbknn(adata, batch_key='sample')
+        sc.external.pp.bbknn(adata, batch_key=batch_key, n_pcs=n_pcs)
     elif args.integrate == 'harmony':
-        sc.external.pp.harmony_integrate(adata, 'sample')
+        sc.external.pp.harmony_integrate(adata, batch_key, n_pcs=n_pcs)
     elif args.integrate == 'scanorama':
-        sc.external.pp.scanorama_integrate(adata, 'sample')
+        sc.external.pp.scanorama_integrate(adata, batch_key, n_pcs=n_pcs)
         
     # find nearest neighbor graph constuction
     pca_rep = 'X_pca'
@@ -171,7 +180,7 @@ def main(argv=None):
         sc.pp.neighbors(
             adata, 
             n_neighbors=15, 
-            n_pcs=50,
+            n_pcs=n_pcs,
             knn=True, 
             method='umap', 
             metric='euclidean',

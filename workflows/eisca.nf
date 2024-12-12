@@ -28,6 +28,7 @@ include { CLUSTERING_ANALYSIS               } from '../modules/local/clustering_
 include { ANNOTATE_CELLS                    } from '../modules/local/annotate_cells'
 include { TRAIN_CT_MODEL                    } from '../modules/local/train_ct_model'
 include { RANK_GENES                        } from '../modules/local/rank_genes'
+include { TRIMGALORE                        } from '../modules/nf-core/trimgalore/main'
 // include { MAKE_REPORT                       } from '../modules/local/make_report'
 // include { GET_PARAMS                       } from '../modules/local/get_params'
 
@@ -134,6 +135,14 @@ workflow EISCA {
         ch_filter_gtf = ch_gtf ? GTF_GENE_FILTER ( ch_genome_fasta, ch_gtf ).gtf : []
 
 
+        // Trimming reads
+        if (params.trimming) {
+            TRIMGALORE (ch_samplesheet)
+            ch_samplesheet = TRIMGALORE.out.reads
+            ch_versions = ch_versions.mix(TRIMGALORE.out.versions)
+        }
+
+
         // Run kallisto bustools pipeline
         if (params.aligner == "kallisto") {
             KALLISTO_BUSTOOLS(
@@ -149,7 +158,9 @@ workflow EISCA {
             )
             ch_versions = ch_versions.mix(KALLISTO_BUSTOOLS.out.ch_versions)
             ch_mtx_matrices = ch_mtx_matrices.mix(KALLISTO_BUSTOOLS.out.raw_counts, KALLISTO_BUSTOOLS.out.filtered_counts)
-            ch_txp2gene = KALLISTO_BUSTOOLS.out.txp2gene
+            if (!params.protocol.contains('smartseq')){  //avoid spaced path generated from KALLISTO_BUSTOOLS
+                ch_txp2gene = KALLISTO_BUSTOOLS.out.txp2gene
+            }
         }
 
         // Run salmon alevin pipeline
@@ -250,7 +261,7 @@ workflow EISCA {
 
     //===================================== Tertiary anaysis stage =====================================
 
-    if (!params.run_analyses.intersect(['tertiary', 'annotation', 'dea']).isEmpty()){
+    if (!params.run_analyses.intersect(['tertiary', 'annotation', 'dea']).is()){
     
         // Get input h5ad file
         ch_h5ad = Channel.empty()

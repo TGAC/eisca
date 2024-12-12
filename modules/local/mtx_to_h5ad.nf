@@ -67,6 +67,9 @@ process MTX_TO_H5AD {
             matrix       = "${mtx_dir}/*\${input_type}.mtx"
             features_tsv = "${mtx_dir}/*.genes.txt"
         } // barcodes tsv has same pattern as standard workflow
+        // if (params.protocol.contains('smartseq')) {
+        //     barcodes_tsv = "matrix.cells"
+        // }
 
     } else if (params.aligner == 'alevin') {
 

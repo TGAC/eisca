@@ -21,8 +21,9 @@ process CONCAT_H5AD {
     concat_h5ad.py \\
         --input $samplesheet \\
         --out combined_${input_type}_matrix.h5ad \\
-        --suffix "_matrix.h5ad"
+        --suffix "_${input_type}_matrix.h5ad"
     """
+    // --suffix "_matrix.h5ad" : change to remove 'input_type' so that obs can map samplesheet
 
     stub:
     """

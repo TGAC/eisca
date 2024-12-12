@@ -32,7 +32,7 @@
   - Merging/integration of samples 
 - **Tertiary analysis**
   - Cell type annotation
-  - Differential expression analysis (to be implemented)
+  - Differential expression analysis
   - Trajectory & pseudotime analysis (to be implemented)
   - Other downstream analyses (to be implemented)
 - Pipeline reporting

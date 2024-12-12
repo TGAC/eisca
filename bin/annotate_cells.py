@@ -77,7 +77,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--meta",
         default='auto',
-        choices=['auto', 'sample', 'group'],
+        choices=['auto', 'sample', 'group', 'plate'],
         help="Choose a metadata column as the batch for clustering",
     )                 
     return parser.parse_args(argv)
@@ -126,7 +126,12 @@ def main(argv=None):
 
     # plot UMAPs to visualise the predicted cell-types
     if args.meta == 'auto':
-        batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+        # batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+        batch = 'sample'
+        if hasattr(adata.obs, 'group'):
+            batch = 'group'
+        elif hasattr(adata.obs, 'plate'):
+            batch = 'plate'     
     else:
         batch = args.meta
 

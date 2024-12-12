@@ -104,7 +104,7 @@ def parse_args(argv=None):
         default=0, # 0.02
     )
     parser.add_argument(
-        "--keep_doublets",
+        "--find_doublets",
         help="Whether to perform doublets prediction.",
         action='store_true',
     )
@@ -149,20 +149,21 @@ def main(argv=None):
     util.check_and_create_folder(path_cell_filtering)
 
     samplesheet = pd.read_csv(args.samplesheet)
-    if hasattr(samplesheet, 'group'): # check if all samples assigned a group
+    if 'group' in samplesheet.columns: # check if all samples assigned a group
         if sum(samplesheet['group'].isna()) > 0:
             logger.error(f"In the 'group' column, all samples must be assigned to a group.")
             sys.exit(1)
 
     adata_raw = anndata.read_h5ad(args.h5ad)
-    adata_raw.obs['sample'] = [x.removesuffix('_raw') for x in adata_raw.obs['sample']]
+    # adata_raw.obs['sample'] = [x.removesuffix('_raw') for x in adata_raw.obs['sample']]
 
     summary = []
     summary_filtered = []
     adatas = {}
+    sample = 'plate' if hasattr(adata_raw.obs, 'plate') else 'sample'
     # for sid in adata_raw.obs['sample'].unique():
-    for sid in samplesheet['sample'].unique():
-        adatas.update({sid: adata_raw[adata_raw.obs['sample']==sid]})     
+    for sid in samplesheet[sample].unique():
+        adatas.update({sid: adata_raw[adata_raw.obs[sample]==sid]})     
 
     for sid, adata_s in adatas.items():
 
@@ -179,13 +180,13 @@ def main(argv=None):
             adata_s, qc_vars=["mt", "ribo", "hb"], inplace=True, log1p=True
         )
 
-        obs_raw = adata_s.obs.copy()
+        # obs_raw = adata_s.obs.copy()
 
         # create summary csv file for all samples
         n_cells_raw = adata_s.obs[adata_s.obs['n_genes_by_counts']>0].shape[0]
         n_genes_raw = adata_s.var[adata_s.var['n_cells_by_counts']>0].shape[0]
         summary += [{
-            'Sample ID': sid,
+            f"{sample.capitalize()} ID": sid,
             'Number of cells': n_cells_raw,
             'Number of genes': n_genes_raw,
             'Median genes per cell': np.median(adata_s.obs['n_genes_by_counts']),
@@ -258,7 +259,7 @@ def main(argv=None):
 
 
         # Doublet detection
-        if not args.keep_doublets:
+        if args.find_doublets:
             try:
                 scrub = scr.Scrublet(adata_s.X, expected_doublet_rate=args.doublet_rate)
                 doublet_scores, predicted_doublets = scrub.scrub_doublets(min_counts=2, min_cells=3, min_gene_variability_pctl=85, n_prin_comps=30)
@@ -276,7 +277,7 @@ def main(argv=None):
         n_cells = obs_s.shape[0]
         n_genes = adata_s.var[adata_s.var['n_cells_by_counts']>0].shape[0]
         summary_filtered += [{
-            'Sample ID': sid,
+            f"{sample.capitalize()} ID": sid,
             'Number of cells': f"{n_cells} ({n_cells/n_cells_raw:.0%})",
             'Number of genes': f"{n_genes} ({n_genes/n_genes_raw:.0%})",
             'Median genes per cell': np.median(obs_s['n_genes_by_counts']),
@@ -367,8 +368,8 @@ def main(argv=None):
         plt.savefig(Path(path_cell_filtering, 'umap_samples.png'), bbox_inches="tight")
 
 
-    for sid in adata.obs['sample'].unique():
-        adata_s = adata[adata.obs['sample']==sid]
+    for sid in adata.obs[sample].unique():
+        adata_s = adata[adata.obs[sample]==sid]
         path_cell_filtering_s = Path(path_cell_filtering, f"sample_{sid}")
         util.check_and_create_folder(path_cell_filtering_s)
 
@@ -395,15 +396,16 @@ def main(argv=None):
 
 
     # add group column in adata.obs
-    if hasattr(samplesheet, 'group'):
-        sample2group = dict(zip(samplesheet['sample'], samplesheet['group']))
-        adata.obs['group'] = [sample2group.get(x, x) for x in adata.obs['sample']]
+    # if hasattr(samplesheet, 'group'):
+    #     sample2group = dict(zip(samplesheet['sample'], samplesheet['group']))
+    #     adata.obs['group'] = [sample2group.get(x, x) for x in adata.obs['sample']]
 
     # merge samples with the name in column 'merge' if exists
-    if hasattr(samplesheet, 'merge') and sum(samplesheet['merge'].notna())>0:
-        ss1=samplesheet[samplesheet['merge'].notna()]
-        sample2merge = dict(zip(ss1['sample'], ss1['merge']))
-        adata.obs['sample'] = [sample2merge.get(x, x) for x in adata.obs['sample']]
+    if 'merge' in samplesheet.columns:
+        if sum(samplesheet['merge'].notna())>0:
+            ss1=samplesheet[samplesheet['merge'].notna()]
+            sample2merge = dict(zip(ss1['sample'], ss1['merge']))
+            adata.obs['sample'] = [sample2merge.get(x, x) for x in adata.obs['sample']]
 
     # save a filtered and normalized concated h5ad file
     adata.write_h5ad(Path(path_quant_qc, f'adata_filtered_normalized.h5ad'))
@@ -423,10 +425,10 @@ def main(argv=None):
         if args.quantile_lower > 0: params.update({"--quantile_lower": args.quantile_lower})        
         params.update({"--iqr_coef": args.iqr_coef})        
         params.update({"--mt": args.mt})
-        if not args.keep_doublets: 
+        if args.find_doublets: 
             params.update({"--doublet_rate": args.doublet_rate})
         else:
-            params.update({"--keep_doublets": args.keep_doublets})
+            params.update({"--find_doublets": args.find_doublets})
         json.dump(params, file, indent=4)
 
 

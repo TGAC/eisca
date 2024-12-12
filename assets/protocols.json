@@ -73,6 +73,9 @@
         },
         "smartseq": {
             "protocol": "SMARTSEQ"
+        },
+        "smartseq2": {
+            "protocol": "SMARTSEQ2"
         }
     },
     "universc": {

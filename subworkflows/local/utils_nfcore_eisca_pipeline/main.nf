@@ -77,9 +77,7 @@ workflow PIPELINE_INITIALISATION {
     //
     validateInputParameters()
 
-    //
-    // Create channel from input file provided through params.input
-    //
+
     Channel
         .fromSamplesheet("input")
         .map {
@@ -99,7 +97,7 @@ workflow PIPELINE_INITIALISATION {
                 return [ meta, fastqs.flatten() ]
         }
         .set { ch_samplesheet }
-
+    
     emit:
     samplesheet = ch_samplesheet
     versions    = ch_versions
@@ -172,6 +170,13 @@ def validateInputSamplesheet(input) {
 
     return [ metas[0], fastqs ]
 }
+
+//
+// Validate channels from smart-seq samplesheet
+//
+def validateSmartseqSamplesheet(input) {
+}
+
 //
 // Get attribute from genome config file e.g. fasta
 //

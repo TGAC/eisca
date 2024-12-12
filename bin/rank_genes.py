@@ -69,7 +69,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--meta",
         default='auto',
-        choices=['auto', 'sample', 'group'],
+        choices=['auto', 'sample', 'group', 'plate'],
         help="Choose a metadata column as the batch for clustering.",
     )
     parser.add_argument(
@@ -114,7 +114,12 @@ def main(argv=None):
     groups = args.groups.split(',') if args.groups != 'all' else 'all'
 
     if args.meta == 'auto':
-        batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+        # batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+        batch = 'sample'
+        if hasattr(adata.obs, 'group'):
+            batch = 'group'
+        elif hasattr(adata.obs, 'plate'):
+            batch = 'plate'  
     else:
         batch = args.meta
 

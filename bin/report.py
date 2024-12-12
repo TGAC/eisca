@@ -123,7 +123,13 @@ def main(argv=None):
     report.footer.add(EILabsAddendum(workflow_name, args.wf_version))
 
     samplesheet = pd.read_csv(args.samplesheet)
-    batch = 'group' if hasattr(samplesheet, 'group') else 'sample'
+    # batch = 'group' if 'group' in samplesheet.columns else 'sample'
+    sample = 'plate' if 'plate' in samplesheet.columns else  'sample'
+    batch = 'sample'
+    if 'group' in samplesheet.columns:
+        batch = 'group'
+    elif 'plate' in samplesheet.columns:
+        batch = 'plate'  
     # Nbatch = len(samplesheet[batch].unique())
     # samples = samplesheet['sample'].unique()
 
@@ -140,7 +146,7 @@ def main(argv=None):
     # print(path_quant_qc) #tst
 
     if path_quant_qc.exists():
-        summary = pd.read_csv(Path(path_quant_qc, 'sample_summary.csv')).set_index('Sample ID')
+        summary = pd.read_csv(Path(path_quant_qc, 'sample_summary.csv')).set_index(f"{sample.capitalize()} ID")
         Nsample = summary.shape[0]
         with report.add_section('Single cell summary', 'Summary'):
             html.p("""This section gives an overall summary of the single-cell count matrix for 
@@ -165,7 +171,7 @@ def main(argv=None):
         logger.info('Skipping Quantification QC')
 
     if path_cell_filtering.exists():
-        summary = pd.read_csv(Path(path_cell_filtering, 'sample_summary_filtered.csv')).set_index('Sample ID')
+        summary = pd.read_csv(Path(path_cell_filtering, 'sample_summary_filtered.csv')).set_index(f"{sample.capitalize()} ID")
         with report.add_section('Cell filtering', 'Cell filtering'):
             html.p("""This section presents the statistics and QC plots after cell filtering process. 
                    The filtering process includes hard thresholds for minimum genes, minimum counts, 
