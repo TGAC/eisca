@@ -15,7 +15,9 @@ def get_main_logger(name):
     _log_name = name
     logging.basicConfig(
         format='[%(asctime)s - %(name)s] %(message)s',
-        datefmt='%H:%M:%S', level=logging.INFO)
+        datefmt='%H:%M:%S', level=logging.INFO,
+        stream=sys.stdout
+    )
     return logging.getLogger(name)
 
 

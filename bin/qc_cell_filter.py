@@ -167,7 +167,6 @@ def main(argv=None):
 
     for sid, adata_s in adatas.items():
 
-        # import pdb; pdb.set_trace() #debug code
         # QC on raw counts
         # mitochondrial genes
         adata_s.var["mt"] = adata_s.var_names.str.startswith(args.mt)
