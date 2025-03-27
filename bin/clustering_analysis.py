@@ -77,7 +77,13 @@ def parse_args(argv=None):
         default='auto',
         choices=['auto', 'sample', 'group', 'plate'],
         help="Choose a metadata column as the batch for clustering",
-    )                       
+    )
+    parser.add_argument(
+        "--fontsize",
+        type=int,
+        help="Set font size for plots.",
+        default=12,
+    )                     
     return parser.parse_args(argv)
 
 
@@ -88,6 +94,15 @@ def main(argv=None):
     if not args.h5ad.is_file():
         logger.error(f"The given input file {args.h5ad} was not found!")
         sys.exit(2)
+
+    plt.rcParams.update({
+        "font.size": args.fontsize,
+        # "axes.titlesize": 'medium',
+        # "axes.labelsize": 'small',
+        # "xtick.labelsize": 'small',
+        # "ytick.labelsize": 'small',
+        # "legend.fontsize": 'small',
+    })
 
     util.check_and_create_folder(args.outdir)
     path_clustering = Path(args.outdir)
@@ -166,9 +181,9 @@ def main(argv=None):
     if args.integrate == 'bbknn':
         sc.external.pp.bbknn(adata, batch_key=batch_key, n_pcs=n_pcs)
     elif args.integrate == 'harmony':
-        sc.external.pp.harmony_integrate(adata, batch_key, n_pcs=n_pcs)
+        sc.external.pp.harmony_integrate(adata, batch_key)
     elif args.integrate == 'scanorama':
-        sc.external.pp.scanorama_integrate(adata, batch_key, n_pcs=n_pcs)
+        sc.external.pp.scanorama_integrate(adata, batch_key)
         
     # find nearest neighbor graph constuction
     pca_rep = 'X_pca'
@@ -223,7 +238,7 @@ def main(argv=None):
         ncol = min((n_cluster//20 + min(n_cluster%20, 1)), 3)
         with plt.rc_context():
             prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True)
-            prop.legend(bbox_to_anchor=(1+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
+            prop.legend(bbox_to_anchor=(1+(args.fontsize-10)/50+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
             plt.savefig(Path(path_res, f"prop_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
 
 

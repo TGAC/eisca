@@ -79,7 +79,13 @@ def parse_args(argv=None):
         default='auto',
         choices=['auto', 'sample', 'group', 'plate'],
         help="Choose a metadata column as the batch for clustering",
-    )                 
+    )
+    parser.add_argument(
+        "--fontsize",
+        type=int,
+        help="Set font size for plots.",
+        default=12,
+    )           
     return parser.parse_args(argv)
 
 
@@ -94,6 +100,15 @@ def main(argv=None):
     if args.model_file and not args.model_file.is_file():
         logger.error(f"The given input file {args.model_file} was not found!")
         sys.exit(2)
+
+    plt.rcParams.update({
+        "font.size": args.fontsize,
+        # "axes.titlesize": 'medium',
+        # "axes.labelsize": 'small',
+        # "xtick.labelsize": 'small',
+        # "ytick.labelsize": 'small',
+        # "legend.fontsize": 'small',
+    })
 
     util.check_and_create_folder(args.outdir)
     path_annotation = Path(args.outdir)
@@ -164,7 +179,7 @@ def main(argv=None):
     ncol = min((n_cluster//20 + min(n_cluster%20, 1)), 3)
     with plt.rc_context():
         prop = pd.crosstab(adata.obs[label_type], adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True)
-        prop.legend(bbox_to_anchor=(1.4+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
+        prop.legend(bbox_to_anchor=(1.4+(args.fontsize-10)/50+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
         plt.savefig(Path(path_annotation, f"prop_{label_type}.png"), bbox_inches="tight")    
 
 

@@ -81,7 +81,13 @@ def parse_args(argv=None):
         "--celltypes",
         default='all',
         help="Spcecify a list cell-types for DEA between groups, e.g. 'celltype1,celltype2'.",
-    )                       
+    )
+    parser.add_argument(
+        "--fontsize",
+        type=int,
+        help="Set font size for plots.",
+        default=12,
+    )                
     return parser.parse_args(argv)
 
 
@@ -92,6 +98,15 @@ def main(argv=None):
     if not args.h5ad.is_file():
         logger.error(f"The given input file {args.h5ad} was not found!")
         sys.exit(2)
+
+    plt.rcParams.update({
+        "font.size": args.fontsize,
+        # "axes.titlesize": 'medium',
+        # "axes.labelsize": 'small',
+        # "xtick.labelsize": 'small',
+        # "ytick.labelsize": 'small',
+        # "legend.fontsize": 'small',
+    })
 
     util.check_and_create_folder(args.outdir)
     path_analysis = Path(args.outdir)
