@@ -8,7 +8,7 @@ process ANNOTATE_CELLS {
 
     input:
     path h5ad_filtered
-    path model_file
+    // path model_file
 
     output:
     path "annotation"
@@ -24,7 +24,6 @@ process ANNOTATE_CELLS {
     """
     annotate_cells.py \\
         --h5ad ${h5ad_filtered} \\
-        --model_file ${model_file} \\
         --outdir annotation \\
         $args \\
 

@@ -88,7 +88,6 @@ The pipeline wutest has following parameters:
 | --fasta \<file> | Reference FASTA gnome file |
 | --gtf \<file> | Reference GTF annotation file |
 | --parity \<string> | Indicating whether the input reads are paired-end (paired) or single-end (sinlge). It is paired by default |
-| --ctmodel \<file> | CellTypist model file for cell-type annotation analysis |
 | --args_qccellfilter \<string> | Flagged argument settings for the process of Cell filtering and QC, e.g. "--min_genes 50 --min_cells 1" |
 | --args_clustering \<string> | Flagged argument settings for the process of clustering analysis, e.g. "--regress --scale" |
 | --args_annotation \<string> | Flagged argument settings for the process of cell-type annotation analysis, e.g. "--model Immune_All_Low.pkl" |
@@ -193,6 +192,7 @@ For example, `--args_clustering "--integrate harmony"`
 Users can set the options for cell-type annotation analysis in the parameter `--args_annotation`, which are as follows. 
 | Options   | Description |
 | ----------- | ----------- |
+| --model_file  \<string> | Specify a CellTypist model file for cell-type annotation analysis. |
 | --model  \<string> | Specify a CellTypist model name, igored if a model file specified. (default='Immune_All_Low.pkl')|
 | --mode  \<[best match, prob match]> | The way cell prediction is performed. 'best match' is to choose the cell type with the largest score/probability as the final prediction. Setting to 'prob match' will enable a multi-label classification, which assigns 0 (i.e., unassigned), 1, or >=2 cell type labels to each query cell. (default='best match')|
 | --p_thres  \<float> | Probability threshold for the multi-label classification. Ignored if mode is 'best match'. (default=0.5) |
@@ -201,7 +201,7 @@ Users can set the options for cell-type annotation analysis in the parameter `--
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 | --fontsize  \<int> | Specify the font size for plots. (default=12) |
 
-For example, `--args_annotation "--model Immune_All_Low.pkl"`
+For example, `--args_annotation "--model_file path-to-file/my_model.pkl"`
 
 
 ## Training CellTypist models 

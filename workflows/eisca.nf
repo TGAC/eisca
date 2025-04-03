@@ -291,10 +291,10 @@ workflow EISCA {
         }
 
         if (params.run_analyses.any{it=='tertiary' || it=='annotation'} and !params.skip_analyses.contains('annotation')) {
-            ch_ctmodel = params.ctmodel? Channel.fromPath(params.ctmodel) : []
+            // ch_ctmodel = params.ctmodel? Channel.fromPath(params.ctmodel) : []
             ANNOTATE_CELLS (
                 ch_h5ad,
-                ch_ctmodel
+                // ch_ctmodel
                 // MTX_CONVERSION.out.h5ad
             )
             // ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
