@@ -157,7 +157,7 @@ def main(argv=None):
         sc.pp.scale(adata, max_value=10)
 
     # Dimensionality reduction
-    n_comps = min((min(adata.X.shape)-1), 50)
+    n_comps = min((min(adata.X[:, adata.var["highly_variable"].values].shape)-1), 50)
     sc.tl.pca(
         adata, 
         n_comps=n_comps, 
