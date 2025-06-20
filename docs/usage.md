@@ -168,6 +168,7 @@ Users can set the options for cell filtering in the parameter `--args_qccellfilt
 | --find_doublets  \<int> | Whether to perform doublets prediction |
 | --mt  \<string> | Specify a prefix of mitochondrial gene IDs. (default='MT-') |
 | --fontsize  \<int> | Specify the font size for plots. (default=12) |
+| --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
 
 For example, `--args_qccellfilter "--min_genes 50 --pct_mt 20"`
 
@@ -184,6 +185,7 @@ Users can set the options for clustering analysis in the parameter `args_cluster
 | --integrate \<[bbknn, harmony]> | Choose a method for data integration across samples. Currently two integration algorighms can be choosen: 'bbknn' - a fast and intuitive batch effect removal method focus on local structure; 'harmony' - a popular global correction approach that iteratively adjusts the embedding of cells in lower-dimensional space, which is effective at correcting large batch effects, especially in datasets with complex batch structures. (default=None)|
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 | --fontsize  \<int> | Specify the font size for plots. (default=12) |
+| --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
 
 For example, `--args_clustering "--integrate harmony"`
 
@@ -200,6 +202,7 @@ Users can set the options for cell-type annotation analysis in the parameter `--
 | --update_models | An switch of whether to update CellTypist models. |
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 | --fontsize  \<int> | Specify the font size for plots. (default=12) |
+| --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
 
 For example, `--args_annotation "--model_file path-to-file/my_model.pkl"`
 
@@ -233,11 +236,30 @@ Users can set the options for differential analysis in the parameter `--args_dea
 | --celltypes \<string> | Spcecify a subset of cell-types for DEA between groups, e.g. 'celltype1,celltype2'. By default all cell-types are used. (default='all') |
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 | --fontsize  \<int> | Specify the font size for plots. (default=12) |
+| --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
 
 For example:  
 `--args_dea "--groupby leiden_res_0.50"` - perform DEA to find marker genes for each cluster against the rest using clusters defined in column 'leiden_res_0.50' at group level if 'group' is defined in the samplesheet. Applying `--meta sample` to perform DEA at sample level.  
 `--args_dea "--groupby group --reference control"` - perform DEA to find DE genes between each group against the group 'control', groups are defined in column 'group'.  
 `--args_dea "--groupby group --reference control --celltype_col majority_voting"` - same as above but for each cell-type defined in column 'majority_voting'.
+
+
+## Cell-cell communication analysis
+Users can set the options for cell-cell communication analysis in the parameter `--args_cellchat`, which are as follows. 
+| Options   | Description |
+| ----------- | ----------- |
+| --group  \<string> | Specify the column from metadata for grouping the cells. (default=majority_voting)|
+| --normalize | Indicates whether to normalize the counts.|
+| --db  \<[human, mouse]> | Specify the species of CellChatDB. (default=human) |
+| --dbc  \<string> | Specify the categories of CellChatDB, e.g. Secreted Signaling. |
+| --dbenps | Indicates whether to use all CellChatDB excepting 'Non-protein Signaling'  |
+| --threads  \<int> | Number of threads for parallel runs. (default=4) |
+| --mean_method  \<[trimean, truncatedMean]> | Specify the method for calculating the average gene expression per cell group. Method trimean produces fewer interactions than method truncatedMean. (default=trimean) |
+| --mincells  \<int> | The minimum number of cells required in each cell group. (default=10) |
+| --meta  \<[auto, sample, group]> | Choose a metadata column to define separate subsets of cells for analysis. (default=auto)|
+| --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
+
+For example, `--args_cellchat "--group cellType --mean_method truncatedMean"`
 
 
 ## Running the pipeline

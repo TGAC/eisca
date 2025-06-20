@@ -24,6 +24,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - Tertiary analysis
   - [Cell-type annotation analysis](#annotation-analysis) - Single-cell cell-type annotation analysis
   - [Differential expression analysis](#dea-analysis) - Single-cell differential expression analysis
+  - [Cell-cell communication analysis](#cellchat-analysis) - Single-cell cell-cell communication analysis
 - [Pipeline reporting](#pipeline-reporting)
   - [Analysis report](#analysis-report) - Single-ell Analysis Report
   - [MultiQC](#multiqc) - Aggregate report describing results and QC for tools registered in nf-core
@@ -165,6 +166,31 @@ For details on how to load these into R and perform further downstream analysis,
   - `dotplot_genes_*.png`: dot plot showing top number of DE genes across groups.
   - `dea_*.csv`: a csv table file showing DEA results for all genes, e.g. log fold change, p-values.
 - `parameters.json`: a JSON file containing the parameter settings in the analysis.
+
+
+### <u>CellChat analysis</u>
+
+**Output directory: `results/cellchat`**
+- `sample_*/` or `group_*/`
+  - `aggregated_network_all.png`: circular network plot showing aggregated cell-cell communications.
+  - `aggregated_network_all_weights.png`: circular network plot showing aggregated cell-cell communications with total interaction strength (weights) between any two cell groups.
+  - `aggregated_network_groups.png`: circular network plot (with weights) showing aggregated cell-cell communications sent from each cell group.
+  - `pathway_network_circle_*.png`: circular network plot showing aggregated cell-cell communications for a signaling pathway.
+  - `pathway_network_chord_*.png`: chord diagram plot showing aggregated cell-cell communications for a signaling pathway.
+  - `pathway_network_heatmap_*.png`: heatmap plot showing aggregated cell-cell communications for a signaling pathway.
+  - `pathway_network_contribution_*.png`: bar plot showing the contribution of each ligand-receptor pair to a signaling pathway.
+  - `pathway_network_LR_circle_*.png`: circular network plot showing aggregated cell-cell communications mediated by a single ligand-receptor pair for a signaling pathway.
+  - `pathway_network_LR_chord_*.png`: chord diagram plot showing aggregated cell-cell communications mediated by a single ligand-receptor pair for a signaling pathway.
+  - `cellcell_LR_bubble_*.png`: bubble plot showing all the significant interactions (L-R pairs) from each cell group to other cell groups.
+  - `cellcell_LR_chord_*.png`: chord diagram plot showing all the significant interactions (L-R pairs) from each cell group to other cell groups.
+  - `pathway_genes_violin_*.png`: violin plot showing the gene expression distribution of signaling genes related to the inferred significant communications for a signaling pathway.
+  - `pathway_network_centrality_*.png`: heatmap plot showing dominant senders, receivers, mediators and influencers in the intercellular communication network by computing several network centrality measures for cell groups of a signaling pathway.
+  - `heatmap_signaling_patterns.png`: heatmap plot showing which signals contributing most to outgoing or incoming signaling of certain cell groups. In this heatmap, colobar represents the relative signaling strength of a signaling pathway across cell groups (NB: values are row-scaled). The top colored bar plot shows the total signaling strength of a cell group by summarizing all signaling pathways displayed in the heatmap. The right grey bar plot shows the total signaling strength of a signaling pathway by summarizing all cell groups displayed in the heatmap.
+  - `inferred_cellcell_comm.rds`: a data frame consisting of all the inferred cell-cell communications at the level of ligands/receptors.
+  - `cellchat.rds`: the CellChat object created for the analysis.
+- `parameters.json`: a JSON file containing the parameter settings in the analysis.
+
+
 
 
 ## Pipeline reporting

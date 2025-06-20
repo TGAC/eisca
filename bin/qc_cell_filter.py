@@ -19,7 +19,7 @@ from pathlib import Path
 import util
 # from .util import get_named_logger,
 
-logger = util.get_named_logger('QC_CellFitering')
+logger = util.get_named_logger('QC_CELL_FILTER')
 
 
 
@@ -123,7 +123,12 @@ def parse_args(argv=None):
         type=int,
         help="Set font size for plots.",
         default=12,
-    )                     
+    )
+    parser.add_argument(
+        "--pdf",
+        help="Whether to generate figure files in PDF format.",
+        action='store_true',
+    )                   
     return parser.parse_args(argv)
 
 
@@ -214,6 +219,8 @@ def main(argv=None):
         with plt.rc_context():
             sc.pl.scatter(adata_s, "total_counts", "n_genes_by_counts", color="pct_counts_mt", show=False)
             plt.savefig(Path(path_sample, 'scatter_total_counts_genes.png'), bbox_inches="tight")
+            if args.pdf:
+                plt.savefig(Path(path_sample, 'scatter_total_counts_genes.pdf'), bbox_inches="tight")
 
         # violin plots for n_genes_by_counts, total_counts, pct_counts_mt
         path_sample = Path(path_quant_qc_raw, f"sample_{sid}")
@@ -227,6 +234,8 @@ def main(argv=None):
                     show=False
                 )
                 plt.savefig(Path(path_sample, f'violin{i}_{qc}.png'), bbox_inches="tight")
+                if args.pdf:
+                    plt.savefig(Path(path_sample, f'violin{i}_{qc}.pdf'), bbox_inches="tight")
 
         # due to bug in old scanpy if using multi_panel=True
         # with plt.rc_context():
@@ -317,6 +326,8 @@ def main(argv=None):
                     show=False
                 )
                 plt.savefig(Path(path_sample, f'violin{i}_{qc}.png'), bbox_inches="tight")        
+                if args.pdf:
+                    plt.savefig(Path(path_sample, f'violin{i}_{qc}.pdf'), bbox_inches="tight")        
 
         # hist_df = pd.concat([obs1[['n_genes_by_counts']], obs2[['n_genes_by_counts']]], axis=1)
         # hist_df.columns = ['Before filtering', 'After filtering']
@@ -366,6 +377,8 @@ def main(argv=None):
     with plt.rc_context():
         sc.pl.highly_variable_genes(adata, show=False)
         plt.savefig(Path(path_cell_filtering, 'highly_variable_genes.png'), bbox_inches="tight")
+        if args.pdf:
+            plt.savefig(Path(path_cell_filtering, 'highly_variable_genes.pdf'), bbox_inches="tight")
     sc.tl.pca(adata)
 
     # QC after cell filtering
@@ -380,6 +393,8 @@ def main(argv=None):
             show=False
         )
         plt.savefig(Path(path_cell_filtering, 'umap_samples.png'), bbox_inches="tight")
+        if args.pdf:
+            plt.savefig(Path(path_cell_filtering, 'umap_samples.pdf'), bbox_inches="tight")
 
 
     for sid in adata.obs[sample].unique():
@@ -397,6 +412,8 @@ def main(argv=None):
                     show=False
                 )
                 plt.savefig(Path(path_cell_filtering_s, 'umap_doublet.png'), bbox_inches="tight")
+                if args.pdf:
+                    plt.savefig(Path(path_cell_filtering_s, 'umap_doublet.pdf'), bbox_inches="tight")
 
         with plt.rc_context():
             sc.pl.umap(
@@ -407,6 +424,8 @@ def main(argv=None):
                 show=False
             )
             plt.savefig(Path(path_cell_filtering_s, 'umap_total_counts_genes_mt.png'), bbox_inches="tight")    
+            if args.pdf:
+                plt.savefig(Path(path_cell_filtering_s, 'umap_total_counts_genes_mt.pdf'), bbox_inches="tight")    
 
 
     # add group column in adata.obs

@@ -29,6 +29,8 @@ include { ANNOTATE_CELLS                    } from '../modules/local/annotate_ce
 include { TRAIN_CT_MODEL                    } from '../modules/local/train_ct_model'
 include { RANK_GENES                        } from '../modules/local/rank_genes'
 include { TRIMGALORE                        } from '../modules/nf-core/trimgalore/main'
+include { H5AD_TO_MTX_META                  } from '../modules/local/h5ad_to_mtx_meta'
+include { CELLCELL_COMMUNICATION            } from '../modules/local/cellcell_communication'
 // include { MAKE_REPORT                       } from '../modules/local/make_report'
 // include { GET_PARAMS                       } from '../modules/local/get_params'
 
@@ -261,7 +263,7 @@ workflow EISCA {
 
     //===================================== Tertiary anaysis stage =====================================
 
-    if (!params.run_analyses.intersect(['tertiary', 'annotation', 'dea']).is()){
+    if (!params.run_analyses.intersect(['tertiary', 'annotation', 'dea', 'cellchat']).is()){
     
         // Get input h5ad file
         ch_h5ad = Channel.empty()
@@ -277,7 +279,7 @@ workflow EISCA {
             path1 = "${params.outdir}/clustering/adata_clustering.h5ad"
             path2 = "${params.outdir}/qc_cell_filter/adata_filtered_normalized.h5ad"
             path3 = "${params.outdir}/annotation/adata_annotation.h5ad"
-            if(params.run_analyses.contains('dea') && (new File(path3).exists())){
+            if(params.run_analyses.intersect(['dea', 'cellchat']) && (new File(path3).exists())){
                 ch_h5ad = Channel.fromPath(path3)           
             }else if(new File(path1).exists()){
                 ch_h5ad = Channel.fromPath(path1)
@@ -308,7 +310,19 @@ workflow EISCA {
             )
             ch_versions = ch_versions.mix(RANK_GENES.out.versions)
         }
-   
+        if (params.run_analyses.any{it=='tertiary' || it=='cellchat'} and !params.skip_analyses.contains('cellchat')) {
+            H5AD_TO_MTX_META (
+                ch_h5ad,
+            )
+            ch_versions = ch_versions.mix(H5AD_TO_MTX_META.out.versions)
+            CELLCELL_COMMUNICATION (
+                H5AD_TO_MTX_META.out.h5ad_mtx,
+                H5AD_TO_MTX_META.out.h5ad_meta,
+                H5AD_TO_MTX_META.out.h5ad_genes,
+                H5AD_TO_MTX_META.out.h5ad_cells,
+            )
+            ch_versions = ch_versions.mix(CELLCELL_COMMUNICATION.out.versions)
+        }
         
     }
 

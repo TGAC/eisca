@@ -34,6 +34,7 @@
 - **Tertiary analysis**
   - Cell type annotation
   - Differential expression analysis
+  - Cell-cell communication analysis
   - Trajectory & pseudotime analysis (to be implemented)
   - Other downstream analyses (to be implemented)
 - **Pipeline reporting**
