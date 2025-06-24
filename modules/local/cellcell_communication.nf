@@ -26,7 +26,7 @@ process CELLCELL_COMMUNICATION {
     """
     cellcell_communication.R \\
         --count ${countmtx} \\
-        --meta ${metadata} \\
+        --metadata ${metadata} \\
         --gids ${gene_ids} \\
         --cids ${cell_ids} \\
         --outdir cellchat \\
@@ -35,7 +35,7 @@ process CELLCELL_COMMUNICATION {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        cellchat: $(Rscript -e "cat(as.character(packageVersion('CellChat')))")
+        cellchat: 2.1.2
     END_VERSIONS        
     """
 

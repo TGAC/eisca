@@ -2,11 +2,15 @@
 
 # extract matrix and metadata from an Anndata object
 
+import os
+os.environ["NUMBA_CACHE_DIR"] = "."
+os.environ[ 'MPLCONFIGDIR' ] = '/tmp/'
+
 import scanpy as sc
 import pandas as pd
 import numpy as np
 import argparse
-import scipy.sparse
+import scipy.io
 from pathlib import Path
 import sys
 import util

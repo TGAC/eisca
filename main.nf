@@ -63,7 +63,7 @@ workflow NFCORE_EISCA {
 
     ch_results = Channel.fromPath(params.outdir)
     // if (params.analyses.contains('secondary') || params.analyses.contains('tertiary')){
-    if (!params.run_analyses.intersect(['secondary', 'tertiary', 'annotation', 'dea', 'trajectory']).isEmpty()){    
+    if (!params.run_analyses.intersect(['secondary', 'tertiary', 'annotation', 'dea', 'cellchat']).isEmpty()){    
         // GET_PARAMS()
         MAKE_REPORT (
             ch_results,

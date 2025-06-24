@@ -288,7 +288,7 @@ def main(argv=None):
                    cell groups from scRNA-seq data, based on the CellChat database of ligand–receptor interactions.""")
 
             # showing the aggregated cell-cell communication network
-            if util.check_file(f"{path_cellchat}/{batch}_*", 'aggregated_network.png'):
+            if util.check_file(f"{path_cellchat}/{batch}_*", 'aggregated_network_all.png'):
                 html.p(f"""The following plots show the aggregated cell-cell communication network, either by counting the 
                        number of links or by summarizing communication probabilities (weights). These plots provide an overview 
                        of cell-cell interactions, with the left plot showing the number of interactions and the right plot 

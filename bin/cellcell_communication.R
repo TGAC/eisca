@@ -14,20 +14,20 @@ library(argparse)
 parser <- ArgumentParser()
 parser$add_argument("--outdir", help="Output directory")
 parser$add_argument("--count", help="Input count matrix mtx file")
-parser$add_argument("--meta", help="Input metadata csv file")
+parser$add_argument("--metadata", help="Input metadata csv file")
 parser$add_argument("--gids", help="Input gene ID list csv file")
 parser$add_argument("--cids", help="Input cell ID list csv file")
 parser$add_argument("--group", default="majority_voting", help="Specify the column for grouping the cells")
 parser$add_argument("--normalize", action="store_true", help="Indicates whether to normalize the counts")
-parser$add_argument("--db", default="human",  choices=['human', 'mouse'], help="Specify the species of CellChatDB.")
+parser$add_argument("--db", default="human",  choices=c('human', 'mouse'), help="Specify the species of CellChatDB.")
 parser$add_argument("--dbc", help="The categories of CellChatDB, e.g. Secreted Signaling")
 # parser$add_argument("--dbv", help="The version of CellChatDB, e.g. v1")
 parser$add_argument("--dbenps", action="store_true", help="Use all CellChatDB excepting 'Non-protein Signaling'")
 parser$add_argument("--threads", type="integer", default=4, help="Number of threads for parallel runs")
-parser$add_argument("--mean_method", default="trimean",  choices=['trimean', 'truncatedMean'], 
+parser$add_argument("--mean_method", default="triMean",  choices=c('triMean', 'truncatedMean'), 
         help="Specify the method for calculating the average gene expression per cell group")
 parser$add_argument("--mincells", type="integer", default=10, help="The minimum number of cells required in each cell group")
-parser$add_argument("--meta", default="auto", choices=['auto', 'sample', 'group'], help="Specify a metadata column to define separate subsets of cells for analysis")
+parser$add_argument("--meta", default="auto", choices=c('auto', 'sample', 'group'), help="Specify a metadata column to define separate subsets of cells for analysis")
 parser$add_argument("--pdf", action="store_true", help="Whether to generate figure files in PDF format")
 # parser$add_argument("--plotcoef", type="float", default=1.0, help="plot size equals the coef times default plot size")
 
@@ -37,7 +37,7 @@ args <- parser$parse_args()
 dir.create(args$outdir, showWarnings = FALSE)
 
 # create a cellchat object from counts and metadata
-meta <- read.csv(args$meta, header = TRUE, row.names = 1)
+meta <- read.csv(args$metadata, header = TRUE, row.names = 1)
 counts <- t(readMM(args$count))
 genes <- readLines(args$gids)
 cells <- readLines(args$cids)
@@ -48,15 +48,15 @@ colnames(counts) <- cells
 # normalize the count data if input data is raw counts
 if(args$normalize){
     library.size <- Matrix::colSums(counts)
-    counts <- as(log1p(Matrix::t(Matrix::t(counts)/library.size) * 10000), "dgCMatrix")
+    counts <- as(log1p(Matrix::t(Matrix::t(counts)/library.size) * 10000), "CsparseMatrix")
 }
 
 # set a column to define separate batches for analysis
 batch <- "sample"
 if (args$meta == "auto") {
-  if ("group" %in% colnames(obs)) {
+  if ("group" %in% colnames(meta)) {
     batch <- "group"
-  } else if ("plate" %in% colnames(obs)) {
+  } else if ("plate" %in% colnames(meta)) {
     batch <- "plate"
   }
 } else {
@@ -70,15 +70,15 @@ if(args$db == "human"){
 }else if(args$db == "mouse"){
     CellChatDB <- CellChatDB.mouse
 }
-CellChatDB.use <- NULL
-if(args$dbc){
+CellChatDB.use <- CellChatDB
+if(!is.null(args$dbc) && nchar(args$dbc) > 0){
     CellChatDB.use <- subsetDB(CellChatDB, search = args$dbc, key = "annotation")
 }else if(args$dbenps){
     CellChatDB.use <- subsetDB(CellChatDB)
 }
 
 
-for(sid in unique(meta[[batch]]){
+for(sid in unique(meta[[batch]])){
     sub_idx <- which(meta[[batch]] == sid)
     counts_s <- counts[, sub_idx]
     meta_s <- meta[sub_idx,]
@@ -106,7 +106,7 @@ for(sid in unique(meta[[batch]]){
 
     # Compute the network centrality scores
     cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP")
-
+    groupSize <- as.numeric(table(cellchat@idents))
     png(file=paste0(path_outdir_s, "/aggregated_network_all.png"), width=8,height=8, units="in", res=100)
     netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
     dev.off()
@@ -160,7 +160,7 @@ for(sid in unique(meta[[batch]]){
         netVisual_chord_cell(cellchat, signaling = pathway, lab.cex=1)
         dev.off()
         png(file=paste0(path_outdir_s, "/pathway_network_heatmap_", pathway, '.png'), width=1.5*Ngrp,height=1*Ngrp, units="in", res=100)
-        netVisual_heatmap(cellchat, signaling = pathway, color.heatmap = "Reds", font.size = 12, font.size.title = 15)
+        print(netVisual_heatmap(cellchat, signaling = pathway, color.heatmap = "Reds", font.size = 12, font.size.title = 15))
         dev.off()
         if(args$pdf){
             pdf(file=paste0(path_outdir_s, "/pathway_network_circle_", pathway, '.pdf'), width=8,height=8)
@@ -171,18 +171,18 @@ for(sid in unique(meta[[batch]]){
             netVisual_chord_cell(cellchat, signaling = pathway, lab.cex=1)
             dev.off()
             pdf(file=paste0(path_outdir_s, "/pathway_network_heatmap_", pathway, '.pdf'), width=1.5*Ngrp,height=1*Ngrp)
-            netVisual_heatmap(cellchat, signaling = pathway, color.heatmap = "Reds", font.size = 12, font.size.title = 15)
+            print(netVisual_heatmap(cellchat, signaling = pathway, color.heatmap = "Reds", font.size = 12, font.size.title = 15))
             dev.off()     
         }
 
         # Compute the contribution of each ligand-receptor pair to the overall signaling pathway
         pairLR <- extractEnrichedLR(cellchat, signaling = pathway, geneLR.return = FALSE)
         png(file=paste0(path_outdir_s, "/pathway_network_contribution_", pathway, '.png'), width=6,height=1.5*nrow(pairLR), units="in", res=100)
-        netAnalysis_contribution(cellchat, signaling = pathway, font.size = 12, font.size.title = 15)
+        print(netAnalysis_contribution(cellchat, signaling = pathway, font.size = 12, font.size.title = 15))
         dev.off()
         if(args$pdf){
             pdf(file=paste0(path_outdir_s, "/pathway_network_contribution_", pathway, '.pdf'), width=6,height=1.5*nrow(pairLR))
-            netAnalysis_contribution(cellchat, signaling = pathway, font.size = 12, font.size.title = 15)
+            print(netAnalysis_contribution(cellchat, signaling = pathway, font.size = 12, font.size.title = 15))
             dev.off()
         }
 
@@ -230,11 +230,11 @@ for(sid in unique(meta[[batch]]){
 
         # Plot the signaling gene expression distribution using violin
         png(file=paste0(path_outdir_s, "/pathway_genes_violin_", pathway, '.png'), width=1*Ngrp,height=8, units="in", res=100)
-        plotGeneExpression(cellchat, signaling = pathway, enriched.only = TRUE)
+        print(plotGeneExpression(cellchat, signaling = pathway, enriched.only = TRUE))
         dev.off()
         if(args$pdf){
             pdf(file=paste0(path_outdir_s, "/pathway_genes_violin_", pathway, '.pdf'), width=1*Ngrp,height=8)
-            plotGeneExpression(cellchat, signaling = pathway, enriched.only = TRUE)
+            print(plotGeneExpression(cellchat, signaling = pathway, enriched.only = TRUE))
             dev.off()
         }
 
@@ -253,11 +253,11 @@ for(sid in unique(meta[[batch]]){
     ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing")
     ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming")
     png(file=paste0(path_outdir_s, "/heatmap_signaling_patterns.png"), width=(1*Ngrp+3),height=1*Ngrp, units="in", res=100)
-    ht1 + ht2
+    print(ht1 + ht2)
     dev.off()
     if(args$pdf){
         pdf(file=paste0(path_outdir_s, "/heatmap_signaling_patterns.pdf"), width=(1*Ngrp+3),height=1*Ngrp)
-        ht1 + ht2
+        print(ht1 + ht2)
         dev.off()
     }
 
@@ -274,7 +274,7 @@ for(sid in unique(meta[[batch]]){
 # save analysis parameters into a json file
 params <- list()
 params[["--count"]] <- as.character(args$h5ad)
-params[["--meta"]] <- as.character(args$meta)
+params[["--metadata"]] <- as.character(args$metadata)
 params[["--gids"]] <- as.character(args$gids)
 params[["--cids"]] <- as.character(args$cids)
 params[["--group"]] <- as.character(args$group)
@@ -285,7 +285,7 @@ if(args$dbenps){params[["--dbenps"]] <- as.character(args$dbenps)}
 params[["--mean_method"]] <- as.character(args$mean_method)
 params[["--mincells"]] <- as.character(args$mincells)
 params[["--threads"]] <- as.character(args$threads)
-write_json(params, file.path(path_outdir, "parameters.json"), pretty = TRUE, auto_unbox = TRUE)
+write_json(params, file.path(args$outdir, "parameters.json"), pretty = TRUE, auto_unbox = TRUE)
 
 
 
