@@ -153,8 +153,8 @@ for(sid in unique(meta[[batch]])){
     # Visualization of cell-cell communication network for individual signalling pathways
     for(pathway in cellchat@netP$pathways){
         png(file=paste0(path_outdir_s, "/pathway_network_circle_", pathway, '.png'), width=8,height=8, units="in", res=100)
-        par(cex=1.5)
-        netVisual_aggregate(cellchat, signaling = pathway, layout = "circle")
+        par(mar=c(1, 3, 1, 3), cex=1.5)
+        netVisual_aggregate(cellchat, signaling = pathway, layout = "circle", signaling.name = pathway)
         dev.off()
         png(file=paste0(path_outdir_s, "/pathway_network_chord_", pathway, '.png'), width=8,height=8, units="in", res=100)
         netVisual_chord_cell(cellchat, signaling = pathway, lab.cex=1)
@@ -164,8 +164,8 @@ for(sid in unique(meta[[batch]])){
         dev.off()
         if(args$pdf){
             pdf(file=paste0(path_outdir_s, "/pathway_network_circle_", pathway, '.pdf'), width=8,height=8)
-            par(cex=1.5)
-            netVisual_aggregate(cellchat, signaling = pathway, layout = "circle")
+            par(mar=c(1, 3, 1, 3), cex=1.5)
+            netVisual_aggregate(cellchat, signaling = pathway, layout = "circle", signaling.name = pathway)
             dev.off()
             pdf(file=paste0(path_outdir_s, "/pathway_network_chord_", pathway, '.pdf'), width=8,height=8)
             netVisual_chord_cell(cellchat, signaling = pathway, lab.cex=1)

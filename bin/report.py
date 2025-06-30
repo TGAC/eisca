@@ -290,9 +290,10 @@ def main(argv=None):
             # showing the aggregated cell-cell communication network
             if util.check_file(f"{path_cellchat}/{batch}_*", 'aggregated_network_all.png'):
                 html.p(f"""The following plots show the aggregated cell-cell communication network, either by counting the 
-                       number of links or by summarizing communication probabilities (weights). These plots provide an overview 
-                       of cell-cell interactions, with the left plot showing the number of interactions and the right plot 
-                       showing the total interaction strength between cell groups, using circle plots.""")                        
+                       number of links or by summarizing communication probabilities (weights). These circle plots provide 
+                       an overview of cell-cell interactions: the left plot shows the number of interactions, while the right 
+                       plot displays the total interaction strength between cell groups. Thicker edge lines indicate stronger 
+                       signals, and the circle sizes are proportional to the number of cells in each group.""")                        
                 plots_from_image_files(path_cellchat, meta=batch, ncol=2, suffix=['aggregated_network_all*.png'])
 
             # showing the aggregated cell-cell communication network for each signaling pathway
@@ -317,7 +318,7 @@ def main(argv=None):
                        ligand-receptor pairs.""")                        
                 plots_from_image_files(path_cellchat, meta=batch, ncol=2, suffix=['cellcell_LR_bubble_*.png'])
 
-            show_analysis_parameters(f"{path_dea}/parameters.json")                 
+            show_analysis_parameters(f"{path_cellchat}/parameters.json")                 
     else:
         logger.info('Skipping differential expression analysis')
 
