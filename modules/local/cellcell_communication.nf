@@ -4,7 +4,7 @@ process CELLCELL_COMMUNICATION {
     conda "conda-forge::scanpy conda-forge::python-igraph conda-forge::leidenalg"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/davele23/cellchat_sc_rst:latest' :
-        'biocontainers/davele23/cellchat_sc_rst:latest' }"
+        'docker.io/myeihub/cellchat_sc_rst:2.1.2' }"
 
     input:
     path(countmtx)

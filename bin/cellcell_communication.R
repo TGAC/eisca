@@ -273,7 +273,7 @@ for(sid in unique(meta[[batch]])){
 
 # save analysis parameters into a json file
 params <- list()
-params[["--count"]] <- as.character(args$h5ad)
+params[["--count"]] <- as.character(args$count)
 params[["--metadata"]] <- as.character(args$metadata)
 params[["--gids"]] <- as.character(args$gids)
 params[["--cids"]] <- as.character(args$cids)

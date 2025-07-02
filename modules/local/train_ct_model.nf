@@ -4,7 +4,7 @@ process TRAIN_CT_MODEL {
     conda "conda-forge::scanpy conda-forge::python-igraph conda-forge::leidenalg"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/celltypist:1.6.3--pyhdfd78af_0' :
-        'biocontainers/celltypist:1.6.3--pyhdfd78af_0' }"
+        'docker.io/myeihub/celltypist_ps:1.6.3' }"
 
     input:
     path h5ad_filtered

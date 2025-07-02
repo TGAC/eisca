@@ -258,7 +258,11 @@
                 "args_dea": {
                     "type": "string",
                     "description": "Flagged argument settings for the process of differential expression analysis, e.g. '--groupby leiden_res_0.50'."
-                },        
+                },
+                "args_cellchat": {
+                    "type": "string",
+                    "description": "Flagged argument settings for the process of cell-cell communication analysis, e.g. '--group cellType --mean_method truncatedMean'."
+                },       
                 "run_analyses": {
                     "type": "array",
                     "description": "This is a internal parameter created from option --analyses",

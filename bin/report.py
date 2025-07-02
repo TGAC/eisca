@@ -320,7 +320,7 @@ def main(argv=None):
 
             show_analysis_parameters(f"{path_cellchat}/parameters.json")                 
     else:
-        logger.info('Skipping differential expression analysis')
+        logger.info('Skipping cell-cell communication analysis')
 
 
     report.write(args.report)
