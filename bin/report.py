@@ -300,15 +300,15 @@ def main(argv=None):
             if util.check_file(f"{path_cellchat}/{batch}_*", 'pathway_network_circle_*.png'):
                 html.p(f"""The following plots show the aggregated (weighted) cell-cell communication networks for 
                        individual signalling pathways with significant ligand-receptor interactions.""")                        
-                plots_from_image_files(path_cellchat, meta=batch, ncol=2, suffix=['pathway_network_circle_*.png'])
+                plots_from_image_files(path_cellchat, meta=batch, ncol=3, suffix=['pathway_network_circle_*.png'])
 
             # showing the aggregated cell-cell communication network for each signaling pathway (heatmap)
-            if util.check_file(f"{path_cellchat}/{batch}_*", 'pathway_network_heatmap_*.png'):
-                html.p(f"""The following heatmaps show interaction strength in the cell-cell communication network between 
-                       pairs of cell groups, with the y-axis representing sender cells and the x-axis representing receiver 
-                       cells. The top bar plot shows the column-wise sums of the heatmap values, while the right bar plot 
-                       shows the row-wise sums.""")                        
-                plots_from_image_files(path_cellchat, meta=batch, ncol=2, suffix=['pathway_network_heatmap_*.png'])
+            # if util.check_file(f"{path_cellchat}/{batch}_*", 'pathway_network_heatmap_*.png'):
+            #     html.p(f"""The following heatmaps show interaction strength in the cell-cell communication network between 
+            #            pairs of cell groups, with the y-axis representing sender cells and the x-axis representing receiver 
+            #            cells. The top bar plot shows the column-wise sums of the heatmap values, while the right bar plot 
+            #            shows the row-wise sums.""")                        
+            #     plots_from_image_files(path_cellchat, meta=batch, ncol=2, suffix=['pathway_network_heatmap_*.png'])
 
             # showing significant interactions (L-R pairs) from each cell group to other cell groups
             if util.check_file(f"{path_cellchat}/{batch}_*", 'cellcell_LR_bubble_*.png'):
