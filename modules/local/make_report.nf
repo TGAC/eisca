@@ -36,6 +36,8 @@ pandas,2.2.0
 scanpy,1.9.3 
 anndata,0.10.5.post1
 celltypist,1.6.3
+cellchat,2.1.2
+scvi-tools,1.3.3
 EOF
 
     report.py \\

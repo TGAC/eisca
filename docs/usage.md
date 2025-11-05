@@ -91,8 +91,10 @@ The pipeline wutest has following parameters:
 | --args_qccellfilter \<string> | Flagged argument settings for the process of Cell filtering and QC, e.g. "--min_genes 50 --min_cells 1" |
 | --args_clustering \<string> | Flagged argument settings for the process of clustering analysis, e.g. "--regress --scale" |
 | --args_annotation \<string> | Flagged argument settings for the process of cell-type annotation analysis, e.g. "--model Immune_All_Low.pkl" |
+| --args_annotation_scvi \<string> | Flagged argument settings for the process of cell-type annotation analysis by scvi-tools, e.g. "--h5ad_ref ${h5ad_ref} --label_key cellType --scvi_epochs 10 --batch_size 50 --scanvi_epochs 10" |
 | --args_trainctmodel \<string> | Flagged argument settings for the process of training CellTypist models, e.g. "--feature_selection" |
 | --args_dea \<string> | Flagged argument settings for the process of differential expression analysis, e.g. "--groupby leiden_res_0.50" |
+| --args_dea_scvi \<string> | Flagged argument settings for the process of differential expression analysis by scvi-tools, e.g. "--groupby scanvi_label --epochs 10 --batch_size 50" |
 | --save_reference \<true/false> | A Boolean option, if set true the pipeline will save all the intermediate output files apart from end results (true by default). |
 
 
@@ -109,7 +111,9 @@ The pipline has 3 analysis phases:
    - Merging/integration of samples
 3. **tertiary phase** inculdes analyses:    
    - Cell type annotation
+   - Cell type annotation with scvi-tools
    - Differential expression analysis
+   - Differential expression analysis with scvi-tools
    - Trajectory & pseudotime analysis (To be implemented)
    - Other downstream analyses (To be implemented)
 
@@ -182,8 +186,12 @@ Users can set the options for clustering analysis in the parameter `args_cluster
 | --regress | An switch of whether to regress out the variations from the total counts and the percentage of mitochondrial genes expressed. (false by default)|
 | --scale | An switch of whether to scale the expression to have zero mean and unit variance. (false by default)|
 | --resolutions \<string> | Resolution is used to control number of clusters. (default="0.02,0.05,0.1,0.5")|
-| --integrate \<[bbknn, harmony]> | Choose a method for data integration across samples. Currently two integration algorighms can be choosen: 'bbknn' - a fast and intuitive batch effect removal method focus on local structure; 'harmony' - a popular global correction approach that iteratively adjusts the embedding of cells in lower-dimensional space, which is effective at correcting large batch effects, especially in datasets with complex batch structures. (default=None)|
+| --integrate \<[bbknn, harmony, scanorama, scvi]> | Choose a method for data integration across samples. Currently two integration algorighms can be choosen: 'bbknn' - a fast and intuitive batch effect removal method focus on local structure; 'harmony' - a popular global correction approach that iteratively adjusts the embedding of cells in lower-dimensional space, which is effective at correcting large batch effects, especially in datasets with complex batch structures. 'scanorama' - a method focuses on global merging with strong capability in retaining subtle variation across conditions. 'scvi' - uses a deep generative model (conditional variational autoencoder) to learn a latent representation of the data that accounts for batch variation while preserving biological variation, and good for highly heterogeneous datasets. (default=None)|
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
+| --covar_cat  \<[string]> | Specify the list of categorical covariates for scVI models. (default=[]) |
+| --covar_con  \<[string]> | Specify the list of continuous covariates for scVI models. (default=[]) |
+| --epochs  \<int> | Specify the number of epochs for scVI model training. (default=None) |
+| --batch_size  \<int> | Specify the batch size for scVI model training. (default=None) |
 | --fontsize  \<int> | Specify the font size for plots. (default=12) |
 | --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
 
@@ -223,25 +231,71 @@ Users can set the options for training CellTypist models in the parameter `--arg
 For example, `--args_trainctmodel "--model_filename test_model.pkl --labels majority_voting --feature_selection"`
 
 
+## Cell-type annotation analysis with scvi-tools
+Users can set the options for cell-type annotation analysis with scvi-tools in the parameter `--args_annotation_scvi`, which are as follows. 
+| Options   | Description |
+| ----------- | ----------- |
+| --h5ad_ref  \<path> | Specify a reference anndata data file to generate scANVI model for annotation. |
+| --batch_key  \<string> | Specify a batch key for modelling reference data with scVI model. (default='sample')|
+| --label_key  \<string> | Specify a label key of cell types for reference data. (default=None)|
+| --n_top_genes  \<int> | Specify the number of highly-variable genes to keep. (default=2000)|
+| --scvi_epochs  \<int> | Specify the number of epochs for training scVI model. (default=None)|
+| --batch_size  \<int> | Specify the batch size for training scVI model. (default=None)|
+| --scanvi_epochs  \<int> | Specify the number of epochs for training scANVI model. (default=None)|
+| --n_samples_pl  \<int> | Specify the number of samples per label for training scANVI model. (default=None)|
+| --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
+| --fontsize  \<int> | Specify the font size for plots. (default=12) |
+| --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
+
+For example, `--args_annotation_scvi "--h5ad_ref ${h5ad_ref} --label_key cellType --scvi_epochs 10 --batch_size 50 --scanvi_epochs 10"`
+
+
 ## Differential expression analysis
 Users can set the options for differential analysis in the parameter `--args_dea`, which are as follows. 
 | Options   | Description |
 | ----------- | ----------- |
 | --groupby  \<string> | Specify a column of the observation table to define groups. (default='leiden') |
-| --groups  \<string> | Specify a subset of groups, e.g. 'group1,group2'. By defualt, all groups are chosen. (default='all') |
+| --groups  \<string> | Specify a subset of groups, e.g. 'group1,group2'. By defualt, all groups are chosen. (default=None) |
 | --reference  \<string> | Users can spcecify a group name as reference, and all other groups will be comapred against with this group. By default each group will be compared against rest of groups. (default='rest') |
 | --method  \<['t-test', 'wilcoxon', 'logreg', 't-test_overestim_var']> | Choose a test method for differential expression anlaysis. The default method is 't-test', 't-test_overestim_var' overestimates variance of each group, 'wilcoxon' uses Wilcoxon rank-sum, 'logreg' uses logistic regression. (default='t-test')|
 | --n_genes  \<int> | Number of top marker genes to show in plots. (default=20) |
-| --celltype_col \<string> | Spcecify a column of the observation table to define cell-types, and DEA will be performed between groups for each cell-type. |
-| --celltypes \<string> | Spcecify a subset of cell-types for DEA between groups, e.g. 'celltype1,celltype2'. By default all cell-types are used. (default='all') |
+| --celltype_col \<string> | Spcecify a column of the observation table to define cell-types, and DEA will be performed between groups for each cell-type. (default=None) |
+| --celltypes \<string> | Spcecify a subset of cell-types for DEA between groups, e.g. 'celltype1,celltype2'. By default all cell-types are used. (default=None) |
 | --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
 | --fontsize  \<int> | Specify the font size for plots. (default=12) |
 | --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
 
 For example:  
-`--args_dea "--groupby leiden_res_0.50"` - perform DEA to find marker genes for each cluster against the rest using clusters defined in column 'leiden_res_0.50' at group level if 'group' is defined in the samplesheet. Applying `--meta sample` to perform DEA at sample level.  
+`--args_dea "--groupby leiden_res_0.50"` - perform DEA to find marker genes for each cluster against the rest using clusters defined in column 'leiden_res_0.50' at group level if 'group' is defined in the metadata. Applying `--meta sample` to perform DEA at sample level.  
 `--args_dea "--groupby group --reference control"` - perform DEA to find DE genes between each group against the group 'control', groups are defined in column 'group'.  
 `--args_dea "--groupby group --reference control --celltype_col majority_voting"` - same as above but for each cell-type defined in column 'majority_voting'.
+
+
+## Differential expression analysis with scvi-tools
+Users can set the options for differential analysis with scvi-tools in the parameter `--args_dea_scvi`, which are as follows. 
+| Options   | Description |
+| ----------- | ----------- |
+| --groupby  \<string> | Specify a column of the observation table to define groups. (default='None') |
+| --group1  \<string> | Specify a subset of groups, e.g. 'group1,group2'. By defualt, all groups are chosen. (default=None) |
+| --group2  \<string> | Specify a subset of groups, e.g. 'group1,group2'. By defualt, all groups are chosen. (default=None) |
+| --covar_cat  \<[string]> | Specify the list of categorical covariates for scVI models. (default=[]) |
+| --covar_con  \<[string]> | Specify the list of continuous covariates for scVI models. (default=[]) |
+| --epochs  \<int> | Specify the number of epochs for scVI model training. (default=None) |
+| --batch_size  \<int> | Specify the batch size for scVI model training. (default=None) |
+| --celltype_col \<string> | Spcecify a column of the observation table to define cell-types, and DEA will be performed between groups for each cell-type. (default=None)|
+| --celltypes \<string> | Spcecify a subset of cell-types for DEA between groups, e.g. 'celltype1,celltype2'. By default all cell-types are used. (default=None) |
+| --n_markers  \<int> | Number of top marker genes to show in plots. (default=3) |
+| --deg_lfc  \<int> | Set threshold of Log Folder Change for DEGs. (default=0) |
+| --deg_bayes  \<int> | Set threshold of bayes factor for DEGs. (default=0) |
+| --deg_nzerosprop  \<int> | Set threshold of proportion of non-zero expression cells in group1 for DEGs. (default=0) |
+| --meta  \<[auto, sample, group]> | Choose a metadata column as the batch classes on which the clustering UMAPs will be displayed. By default, it is set to 'auto', which means it will use the 'group' column as the batch classes if 'group' is defined in the samplesheet file; otherwise, it will use the 'sample' column. |
+| --fontsize  \<int> | Specify the font size for plots. (default=12) |
+| --pdf | An switch of whether to generate figure files in PDF format. (false by default)|
+
+For example:  
+`--args_dea_scvi "--groupby scanvi_label --epochs 10 --batch_size 50"` - perform DEA to find marker genes for cells of each cell type defined in metadata column `scanvi_label` against the rest cells at group level if `group` is defined in the metadata. Applying `--meta sample` to perform DEA at sample level.  
+`--args_dea_scvi "--groupby group --group1 Control --group2 Treatment --celltype_col scanvi_label --celltypes naive_B_cell,classical_monocyte --epochs 10 --batch_size 50"` - perform DEA to find DE genes by comparing group `Control` against the group 'Treatment' for 2 subpopulations of cell types defined in metadata column `scanvi_label`. Comparing groups are defined in metadata column `group`.  
+`--args_dea_scvi "--groupby group --group1 Control --group2 Treatment --epochs 10 --batch_size 50"` - perform DEA to find DE genes by comparing group `Control` against the group 'Treatment' for for all cells.
 
 
 ## Cell-cell communication analysis

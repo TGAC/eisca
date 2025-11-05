@@ -116,6 +116,16 @@ def floatlist(floatstr):
     return floats
 
 
+def stringlist(strings):
+    """A argparse type
+    PARAMS:
+        strings: a string of strings separated with ','
+    RETURN:
+        A list of strings
+    """
+    return [x for x in strings.split(',')]
+
+
 def check_and_install(package):
     # Check if the package is installed
     package_spec = importlib.util.find_spec(package)

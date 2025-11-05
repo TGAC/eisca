@@ -18,35 +18,30 @@ process ANNOTATE_CELLS {
     when:
     task.ext.when == null || task.ext.when
 
+
     script:
     def args = task.ext.args ?: ''
-    if(params.ctmodel)
-    """
-    annotate_cells.py \\
-        --h5ad ${h5ad_filtered} \\
-        --outdir annotation \\
-        $args \\
-
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version | sed 's/Python //g')
-    END_VERSIONS        
-    """
     
-    else
+    // Conditionally build the model argument
+    def model_arg = ''
+    if (params.ctmodel) {
+        // Ensure you handle the case where params.ctmodel might be a path object or string
+        model_arg = "--model_file ${params.ctmodel}"
+    }
+
     """
     annotate_cells.py \\
         --h5ad ${h5ad_filtered} \\
         --outdir annotation \\
-        $args \\
+        ${model_arg} \\
+        $args
 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-    END_VERSIONS        
-    """    
+    END_VERSIONS
+    """
 
 
 

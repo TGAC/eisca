@@ -367,6 +367,7 @@ def main(argv=None):
 
     # combine all samples' anndata into one anndata
     adata = anndata.concat(adatas, label="sample", index_unique="_", join="outer", merge="unique")
+    adata.layers["counts"] = adata.X.copy()  # preserve raw counts
 
     # Normalization
     sc.pp.normalize_total(adata, target_sum=1e4)

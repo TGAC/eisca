@@ -1,4 +1,4 @@
-process CLUSTERING_ANALYSIS {
+process ANNOTATE_CELLS_SCVI {
     label 'process_medium'
 
     conda "conda-forge::scanpy conda-forge::python-igraph conda-forge::leidenalg"
@@ -7,12 +7,12 @@ process CLUSTERING_ANALYSIS {
         'docker.io/myeihub/scvi_tools_scanpy:1.3.3' }"
 
     input:
-    path(h5ad_filtered)
-    // path samplesheet
+    path h5ad_filtered
+    // path h5ad_ref
 
     output:
-    path "clustering"
-    path "clustering/*.h5ad",  emit: h5ad
+    path "annotation_scvi"
+    path "annotation_scvi/*.h5ad",  emit: h5ad
     path "versions.yml",  emit: versions
 
     when:
@@ -21,9 +21,9 @@ process CLUSTERING_ANALYSIS {
     script:
     def args = task.ext.args ?: ''
     """
-    clustering_analysis.py \\
+    annotate_cells_scvi.py \\
         --h5ad ${h5ad_filtered} \\
-        --outdir clustering \\
+        --outdir annotation_scvi \\
         $args \\
 
 
@@ -31,7 +31,7 @@ process CLUSTERING_ANALYSIS {
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
     END_VERSIONS        
-    """
+    """ 
 
 
 

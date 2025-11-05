@@ -141,7 +141,9 @@ def main(argv=None):
     # path_cell_filtering_dist = Path(path_cell_filtering, 'distribution')
     path_clustering = Path(args.results, 'clustering')
     path_annotation = Path(args.results, 'annotation')
+    path_annotation_scvi = Path(args.results, 'annotation_scvi')
     path_dea = Path(args.results, 'dea')
+    path_dea_scvi = Path(args.results, 'dea_scvi')
     path_cellchat = Path(args.results, 'cellchat')
 
     # print(path_quant_qc) #tst
@@ -220,59 +222,115 @@ def main(argv=None):
         logger.info('Skipping clustering analysis')        
 
 
-    if path_annotation.exists():
-        if util.check_file(f"{path_annotation}/sample_*", ''):
-            batch = 'sample'
-        elif util.check_file(f"{path_annotation}/group_*", ''):
-            batch = 'group'
-        Nbatch = len(samplesheet[batch].unique())
+    if path_annotation.exists() or path_annotation_scvi.exists():
         with report.add_section('Cell-type annotation', 'Annotation'):
-            html.p(f"""This section presents cell-type annotation results using CellTypist which is an 
-            automated tool for cell type annotation based on pre-trained models, capable of accurately 
-            classifying different cell types and subtypes.""")
-            html.p("""The following UMAP plots show the predicted cell-type clusters and the mapped 
-            confidence scores of the cells.""")            
-            plots_from_image_files(path_annotation, suffix=['umap_cell_type.png'], meta=batch, widths=['900'])
-            plots_from_image_files(path_annotation, suffix=['umap_conf_score.png'], meta=batch, widths=['600'])
-            html.p(f"""The following plot shows a stacked bar chart that presents the proportions 
-                   of cell-type clusters across {batch}s. The plot illustrates the distribution 
-                   profiles of predicted cell-type clusters between {batch}s.""")                   
-            plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*330, 1200))])
-            show_analysis_parameters(f"{path_annotation}/parameters.json")                 
+            if path_annotation.exists():
+                if util.check_file(f"{path_annotation}/sample_*", ''):
+                    batch = 'sample'
+                elif util.check_file(f"{path_annotation}/group_*", ''):
+                    batch = 'group'
+                Nbatch = len(samplesheet[batch].unique())               
+                html.p(f"""This section presents cell-type annotation results using CellTypist which is an 
+                automated tool for cell type annotation based on pre-trained models, capable of accurately 
+                classifying different cell types and subtypes.""")
+                html.p("""The following UMAP plots show the predicted cell-type clusters and the mapped 
+                confidence scores of the cells.""")            
+                plots_from_image_files(path_annotation, suffix=['umap_cell_type.png'], meta=batch, widths=['1200'])
+                plots_from_image_files(path_annotation, suffix=['umap_conf_score.png'], meta=batch, widths=['600'])
+                html.p(f"""The following plot shows a stacked bar chart that presents the proportions 
+                    of cell-type clusters across {batch}s. The plot illustrates the distribution 
+                    profiles of predicted cell-type clusters between {batch}s.""")                   
+                plots_from_image_files(path_annotation, suffix=['prop_*.png'], widths=[str(min(Nbatch*500, 1200))])
+                show_analysis_parameters(f"{path_annotation}/parameters.json")
+                if path_annotation_scvi.exists(): html.hr(style="border: 1px solid grey;")
+
+            if path_annotation_scvi.exists():
+                if util.check_file(f"{path_annotation_scvi}/sample_*", ''):
+                    batch = 'sample'
+                elif util.check_file(f"{path_annotation_scvi}/group_*", ''):
+                    batch = 'group'
+                Nbatch = len(samplesheet[batch].unique())               
+                html.p(f"""This section presents cell-type annotation results using scvi-tools, which predicts the 
+                       cell types of the query dataset based on a scANVI model trained on the reference latent 
+                       space and transferred to the query data.""")
+                html.p("""The following UMAP plots show the predicted cell-type clusters and the mapped confidence scores 
+                       which are probabilities associated with that predicted cell types.""")            
+                plots_from_image_files(path_annotation_scvi, suffix=['umap_cell_type.png'], meta=batch, widths=['1200'])
+                plots_from_image_files(path_annotation_scvi, suffix=['umap_conf_score.png'], meta=batch, widths=['600'])
+                html.p(f"""The following plot shows a stacked bar chart that presents the proportions 
+                    of cell-type clusters across {batch}s. The plot illustrates the distribution 
+                    profiles of predicted cell-type clusters between {batch}s.""")                   
+                plots_from_image_files(path_annotation_scvi, suffix=['prop_*.png'], widths=[str(min(Nbatch*500, 1200))])
+                show_analysis_parameters(f"{path_annotation_scvi}/parameters.json")                            
     else:
         logger.info('Skipping cell-type annotation')   
 
 
-    if path_dea.exists():
-        if util.check_file(f"{path_dea}/sample_*", ''):
-            batch = 'sample'
-        elif util.check_file(f"{path_dea}/group_*", ''):
-            batch = 'group'        
+    if path_dea.exists() or path_dea_scvi.exists():
         with report.add_section('Differential expression analysis', 'DEA'):
-            html.p("""This section presents the results of the differentially expression analysis using Scanpy's 
-                   rank_genes_groups function. These results allow users to identify marker genes by comparing 
-                   the ranked genes of one cluster against all others, as well as to explore differentially 
-                   expressed genes between two conditions.""")
+            if path_dea.exists():
+                if util.check_file(f"{path_dea}/sample_*", ''):
+                    batch = 'sample'
+                elif util.check_file(f"{path_dea}/group_*", ''):
+                    batch = 'group'      
+            
+                html.p("""This section presents the results of the differentially expression analysis using Scanpy's 
+                    rank_genes_groups function. These results allow users to identify marker genes by comparing 
+                    the ranked genes of one cluster against all others, as well as to explore differentially 
+                    expressed genes between two conditions.""")
 
-            # showing plots for DEA between conditions for all cells
-            if util.check_file(f"{path_dea}", '*.png'):
-                html.p("""The following plots show differentially expressed genes between the two conditions.""")                        
-                plots_from_image_files(path_dea, suffix=['plot_genes_*.png'])
-                plots_from_image_files(path_dea, suffix=['dotplot_genes_*.png'])
+                # showing plots for DEA between conditions for all cells
+                if util.check_file(f"{path_dea}", '*.png'):
+                    html.p("""The following plots show differentially expressed genes between the two conditions.""")                        
+                    plots_from_image_files(path_dea, suffix=['plot_genes_*.png'])
+                    plots_from_image_files(path_dea, suffix=['dotplot_genes_*.png'])
 
-            # showing plots for DEA between conditions for each celltype
-            if util.check_file(f"{path_dea}/celltype_*", '*.png'):
-                html.p("""The following plots show differentially expressed genes between two conditions across various cell types/clusters.""")                        
-                plots_from_image_files(path_dea, meta='celltype', suffix=['plot_genes_*.png'])
-                plots_from_image_files(path_dea, meta='celltype', suffix=['dotplot_genes_*.png'])
+                # showing plots for DEA between conditions for each celltype
+                if util.check_file(f"{path_dea}/celltype_*", '*.png'):
+                    html.p("""The following plots show differentially expressed genes between two conditions across various cell types/clusters.""")                        
+                    plots_from_image_files(path_dea, meta='celltype', suffix=['plot_genes_*.png'])
+                    plots_from_image_files(path_dea, meta='celltype', suffix=['dotplot_genes_*.png'])
 
-            # showing plots for one cluster vs rest for each sample/group
-            if util.check_file(f"{path_dea}/{batch}_*", '*.png'):
-                html.p(f"""The following plots display the ranking of genes for one of the cell clusters against the rest of the clusters across {batch}s.""")                        
-                plots_from_image_files(path_dea, meta=batch, suffix=['plot_genes_*.png'])
-                plots_from_image_files(path_dea, meta=batch, suffix=['dotplot_genes_*.png'])
+                # showing plots for one cluster vs rest for each sample/group
+                if util.check_file(f"{path_dea}/{batch}_*", '*.png'):
+                    html.p(f"""The following plots display the ranking of genes for one of the cell clusters against the rest of the clusters across {batch}s.""")                        
+                    plots_from_image_files(path_dea, meta=batch, suffix=['plot_genes_*.png'])
+                    plots_from_image_files(path_dea, meta=batch, suffix=['dotplot_genes_*.png'])
 
-            show_analysis_parameters(f"{path_dea}/parameters.json")                 
+                show_analysis_parameters(f"{path_dea}/parameters.json")
+                if path_annotation_scvi.exists(): html.hr(style="border: 1px solid grey;")
+
+            if path_dea_scvi.exists():
+                if util.check_file(f"{path_dea_scvi}/sample_*", ''):
+                    batch = 'sample'
+                elif util.check_file(f"{path_dea_scvi}/group_*", ''):
+                    batch = 'group'      
+            
+                html.p("""This section presents the results of the differentially expression analysis using scvi-tools's 
+                       differential_expression function by estimating the posterior distribution of the log fold-change (LFC) 
+                       between subpopulations. These results allow users to identify marker genes by comparing the ranked 
+                       genes of one cluster against all others, as well as to explore differentially expressed genes between 
+                       two conditions.""")
+
+                # showing plots for DEA between conditions for all cells
+                if util.check_file(f"{path_dea_scvi}", '*.png'):
+                    html.p("""The following plots show differentially expressed genes between the two conditions.""")                        
+                    plots_from_image_files(path_dea_scvi, suffix=['dotplot_*.png'])
+                    plots_from_image_files(path_dea_scvi, suffix=['heatmap_*.png'])
+
+                # showing plots for DEA between conditions for each celltype
+                if util.check_file(f"{path_dea_scvi}/celltype_*", '*.png'):
+                    html.p("""The following plots show differentially expressed genes between two conditions across selected subpopulations.""")                        
+                    plots_from_image_files(path_dea_scvi, meta='celltype', suffix=['dotplot_*.png'])
+                    plots_from_image_files(path_dea_scvi, meta='celltype', suffix=['heatmap_*.png'])
+
+                # showing plots for one cluster vs rest for each sample/group
+                if util.check_file(f"{path_dea_scvi}/{batch}_*", '*.png'):
+                    html.p(f"""The following plots show differentially expressed genes between subpopulations across {batch}s.""")                        
+                    plots_from_image_files(path_dea_scvi, meta=batch, suffix=['dotplot_*.png'])
+                    plots_from_image_files(path_dea_scvi, meta=batch, suffix=['heatmap_*.png'])
+
+                show_analysis_parameters(f"{path_dea_scvi}/parameters.json")
     else:
         logger.info('Skipping differential expression analysis')
 

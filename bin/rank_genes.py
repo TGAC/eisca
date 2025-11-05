@@ -46,7 +46,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--groups",
-        default='all',
+        default=None,
         help="Specify a subset of groups, e.g. 'group1,group2'.",
     )
     parser.add_argument(
@@ -79,7 +79,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--celltypes",
-        default='all',
+        default=None,
         help="Spcecify a list cell-types for DEA between groups, e.g. 'celltype1,celltype2'.",
     )
     parser.add_argument(
@@ -131,7 +131,7 @@ def main(argv=None):
             logger.error(f"Please specify a observation column for grouping!")
             sys.exit(2)
 
-    groups = args.groups.split(',') if args.groups != 'all' else 'all'
+    groups = args.groups.split(',') if args.groups else args.groups
 
     if args.meta == 'auto':
         # batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
@@ -146,12 +146,12 @@ def main(argv=None):
     
     # differential expression analysis
     if groupby == 'group': # between conditions
-        if groups == 'all':
+        if not groups:
             groups = list(adata.obs['group'].unique())
             groups.remove(args.reference)
 
         if args.celltype_col: # DEA between conditions for each celltype
-            celltypes = sorted(adata.obs[args.celltype_col].unique()) if args.celltypes == 'all' else args.celltypes.split(',')
+            celltypes = args.celltypes.split(',') if args.celltypes else sorted(adata.obs[args.celltype_col].unique()) 
             for celltype in celltypes:
                 adata_s = adata[adata.obs[args.celltype_col]==celltype]   
                 path_analysis_s = Path(path_analysis, f"celltype_{celltype}".replace(' ', '_').replace('/', '_'))
@@ -169,7 +169,7 @@ def main(argv=None):
                         adata_s, 
                         n_genes=args.n_genes, 
                         sharey=True,
-                        groups=groups if groups!='all' else None,
+                        groups=groups,
                         fontsize=13,
                     )
                     plt.savefig(Path(path_analysis_s, f"plot_genes_group_{args.reference}.png"), bbox_inches="tight")
@@ -180,7 +180,7 @@ def main(argv=None):
                     sc.pl.rank_genes_groups_dotplot(
                         adata_s, 
                         n_genes=args.n_genes, 
-                        groups=groups if groups!='all' else None,
+                        groups=groups,
                     )
                     plt.savefig(Path(path_analysis_s, f"dotplot_genes_group_{args.reference}.png"), bbox_inches="tight")
                     if args.pdf:
@@ -204,7 +204,7 @@ def main(argv=None):
                     adata, 
                     n_genes=args.n_genes, 
                     sharey=True,
-                    groups=groups if groups!='all' else None,
+                    groups=groups,
                     fontsize=13,
                 )
                 plt.savefig(Path(path_analysis, f"plot_genes_group_{args.reference}.png"), bbox_inches="tight")
@@ -215,7 +215,7 @@ def main(argv=None):
                 sc.pl.rank_genes_groups_dotplot(
                     adata, 
                     n_genes=args.n_genes, 
-                    groups=groups if groups!='all' else None,
+                    groups=groups,
                 )
                 plt.savefig(Path(path_analysis, f"dotplot_genes_group_{args.reference}.png"), bbox_inches="tight")
                 if args.pdf:
@@ -247,7 +247,7 @@ def main(argv=None):
                     adata_s, 
                     n_genes=args.n_genes, 
                     sharey=True,
-                    groups=groups if groups!='all' else None,
+                    groups=groups,
                     fontsize=13,
                 )
                 plt.savefig(Path(path_analysis_s, f"plot_genes_{groupby}.png"), bbox_inches="tight")
@@ -258,13 +258,13 @@ def main(argv=None):
                 sc.pl.rank_genes_groups_dotplot(
                     adata_s, 
                     n_genes=args.n_genes, 
-                    groups=groups if groups!='all' else None,
+                    groups=groups,
                 )
                 plt.savefig(Path(path_analysis_s, f"dotplot_genes_{groupby}.png"), bbox_inches="tight")
                 if args.pdf:
                     plt.savefig(Path(path_analysis_s, f"dotplot_genes_{groupby}.pdf"), bbox_inches="tight")
 
-            for gid in sorted(adata_s.obs[groupby].unique() if groups=='all' else groups):
+            for gid in groups if groups else sorted(adata_s.obs[groupby].unique()):
                 sc.get.rank_genes_groups_df(adata_s, group=gid).to_csv(
                     Path(path_analysis_s, f'dea_{groupby}_{gid}_vs_{args.reference}.csv'), 
                     index=False,

@@ -1,4 +1,4 @@
-process CLUSTERING_ANALYSIS {
+process DEA_SCVI {
     label 'process_medium'
 
     conda "conda-forge::scanpy conda-forge::python-igraph conda-forge::leidenalg"
@@ -7,12 +7,11 @@ process CLUSTERING_ANALYSIS {
         'docker.io/myeihub/scvi_tools_scanpy:1.3.3' }"
 
     input:
-    path(h5ad_filtered)
-    // path samplesheet
+    path h5ad_filtered
+    // path model_file
 
     output:
-    path "clustering"
-    path "clustering/*.h5ad",  emit: h5ad
+    path "dea_scvi"
     path "versions.yml",  emit: versions
 
     when:
@@ -21,9 +20,10 @@ process CLUSTERING_ANALYSIS {
     script:
     def args = task.ext.args ?: ''
     """
-    clustering_analysis.py \\
+    dea_scvi.py \\
         --h5ad ${h5ad_filtered} \\
-        --outdir clustering \\
+        --outdir dea_scvi \\
+        --devices $task.cpus \\
         $args \\
 
 
@@ -31,7 +31,7 @@ process CLUSTERING_ANALYSIS {
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
     END_VERSIONS        
-    """
+    """ 
 
 
 

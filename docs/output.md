@@ -23,7 +23,9 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Clustering analysis](#clustering-analysis) - Single-cell clustering analysis
 - Tertiary analysis
   - [Cell-type annotation analysis](#annotation-analysis) - Single-cell cell-type annotation analysis
+  - [Cell-type annotation analysis with scvi-tools](#annotation-analysis) - Single-cell cell-type annotation analysis with scvi-tools
   - [Differential expression analysis](#dea-analysis) - Single-cell differential expression analysis
+  - [Differential expression analysis with scvi-tools](#dea-analysis) - Single-cell differential expression analysis with scvi-tools
   - [Cell-cell communication analysis](#cellchat-analysis) - Single-cell cell-cell communication analysis
 - [Pipeline reporting](#pipeline-reporting)
   - [Analysis report](#analysis-report) - Single-ell Analysis Report
@@ -144,6 +146,7 @@ For details on how to load these into R and perform further downstream analysis,
 - `resolution_*/`
   - `prop_leiden_res_*.png`: plot showing a stacked bar chart that presents the proportions of clusters across samples/groups.
 - `parameters.json`: a JSON file containing the parameter settings in the analysis.
+- `scvi_model/model.pt`: the saved scVI model generated using scvi-tools for integration.
 
 
 ### <u>Annotation analysis</u>
@@ -156,14 +159,28 @@ For details on how to load these into R and perform further downstream analysis,
 - `prop_majority_voting.png`: plot showing a stacked bar chart that presents the proportions of cell-type clusters across samples/groups.
 - `parameters.json`: a JSON file containing the parameter settings in the analysis.
 
+**Output directory: `results/annotation_scvi`**
+- `adata_annotation.h5ad`: AnnData object file after cell-type annotation analysis.
+- `sample_*/` or `group_*/`
+  - `umap_cell_type.png`: UMAP plots showing predicted cell-type clusters.
+  - `umap_conf_score.png`: UMAP plots showing mapped confidence scores of the cells.
+- `prop_scanvi_label.png`: plot showing a stacked bar chart that presents the proportions of cell-type clusters across samples/groups.
+- `parameters.json`: a JSON file containing the parameter settings in the analysis.
+
 
 ### <u>DEA analysis</u>
 
 **Output directory: `results/dea`**
-- `adata_annotation.h5ad`: AnnData object file after cell-type annotation analysis.
 - `sample_*/` or `group_*/` or `celltype_*/` (no subfolder for DEA betweeen groups)
   - `plot_genes_*.png`: plots showing top number of DE genes across groups.
   - `dotplot_genes_*.png`: dot plot showing top number of DE genes across groups.
+  - `dea_*.csv`: a csv table file showing DEA results for all genes, e.g. log fold change, p-values.
+- `parameters.json`: a JSON file containing the parameter settings in the analysis.
+
+**Output directory: `results/dea_scvi`**
+- `sample_*/` or `group_*/` or `celltype_*/` (no subfolder for DEA betweeen groups)
+  - `dotplot_*.png`: plots showing top number of DE genes across groups.
+  - `heatmap_*.png`: dot plot showing heatmap of top number of DE genes across groups.
   - `dea_*.csv`: a csv table file showing DEA results for all genes, e.g. log fold change, p-values.
 - `parameters.json`: a JSON file containing the parameter settings in the analysis.
 

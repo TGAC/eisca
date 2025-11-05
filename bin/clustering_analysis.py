@@ -1,22 +1,40 @@
 #!/usr/bin/env python
 
 # Set numba chache dir to current working directory (which is a writable mount also in containers)
+# import torch.distributed as dist
 import os
 os.environ["NUMBA_CACHE_DIR"] = "."
 os.environ[ 'MPLCONFIGDIR' ] = '/tmp/'
+# IS_MAIN_PROCESS = os.environ.get("GLOBAL_RANK", "0") == "0"
 
 import scanpy as sc
 import pandas as pd
-import numpy as np
-from scipy import io
-import anndata
 from matplotlib import pyplot as plt
 import argparse
 import sys, json
 from pathlib import Path
 import util
+import torch
+import scvi
+
 
 logger = util.get_named_logger('CLUSTERING')
+
+
+# import torch.distributed as dist
+
+# def is_main_process():
+#     # Torch DDP sets this automatically
+#     if dist.is_available() and dist.is_initialized():
+#         return dist.get_rank() == 0
+
+#     # Fall back to environment vars if dist not yet initialized
+#     for key in ["RANK", "SLURM_PROCID", "LOCAL_RANK", "GLOBAL_RANK"]:
+#         if key in os.environ:
+#             return os.environ[key] in ("0", 0)
+#     return True
+
+# IS_MAIN_PROCESS = is_main_process()
 
 
 def parse_args(argv=None):
@@ -69,7 +87,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--integrate",
         default=None,
-        choices=['bbknn', 'harmony', 'scanorama'],
+        choices=['bbknn', 'harmony', 'scanorama', 'scvi'],
         help="Choose a method for data integration",
     )
     parser.add_argument(
@@ -88,7 +106,37 @@ def parse_args(argv=None):
         "--pdf",
         help="Whether to generate figure files in PDF format.",
         action='store_true',
-    )                     
+    )
+    parser.add_argument(
+        "--covar_cat",
+        type=util.stringlist,
+        help="List of categorical covariates.",
+        default=[],
+    )
+    parser.add_argument(
+        "--covar_con",
+        type=util.stringlist,
+        help="List of continuous covariates.",
+        default=[],
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        help="Set number of epochs for scvi training.",
+        default=None,
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        help="Set batch size for scvi training.",
+        default=None,
+    )
+    parser.add_argument(
+        "--devices",
+        type=int,
+        help="Set number of cpus/gpus for scvi training.",
+        default=None,
+    )            
     return parser.parse_args(argv)
 
 
@@ -112,12 +160,15 @@ def main(argv=None):
     util.check_and_create_folder(args.outdir)
     path_clustering = Path(args.outdir)
     util.check_and_create_folder(path_clustering)
+    path_scvi_model = Path(path_clustering, "scvi_model")
+    util.check_and_create_folder(path_scvi_model)
 
-    adata = anndata.read_h5ad(args.h5ad)
+    adata = sc.read_h5ad(args.h5ad)
 
-    # save the original counts 
-    adata.layers["counts"] = adata.X.copy()
-
+    # save the original counts
+    if "counts" not in adata.layers: 
+        adata.layers["counts"] = adata.X.copy()
+        
     # Normalization
     if args.normalize:
         sc.pp.normalize_total(adata, target_sum=1e4)
@@ -149,64 +200,93 @@ def main(argv=None):
     #s adata.raw = adata
     #s adata = adata[:, adata.var.highly_variable]
 
-    # Regress out effects of total counts per cell and the percentage of mitochondrial genes expressed
-    if args.regress:
-        if not(hasattr(adata.obs, 'total_counts') and hasattr(adata.obs, 'pct_counts_mt')):
-            adata.var['mt'] = adata.var_names.str.startswith('MT-')
-            sc.pp.calculate_qc_metrics(adata, qc_vars=["mt"], inplace=True, log1p=True)
-            # sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)    
-        sc.pp.regress_out(adata, ['total_counts', 'pct_counts_mt'])
 
-    # scale the expression to have zero mean and unit variance
-    if args.scale:
-        sc.pp.scale(adata, max_value=10)
+    if args.integrate == 'scvi':
+        torch.set_float32_matmul_precision("high")
 
-    # Dimensionality reduction
-    n_comps = min((min(adata.X[:, adata.var["highly_variable"].values].shape)-1), 50)
-    sc.tl.pca(
-        adata, 
-        n_comps=n_comps, 
-        chunked=False,
-        zero_center=False, 
-        svd_solver='arpack'
-    )
-
-    # perform data integration
-    if args.meta == 'auto':
-        # batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
-        batch = 'sample'
-        if hasattr(adata.obs, 'group'):
-            batch = 'group'
-        elif hasattr(adata.obs, 'plate'):
-            batch = 'plate' 
-    else:
-        batch = args.meta
-    
-    n_pcs = adata.obsm['X_pca'].shape[1]
-    if args.integrate == 'bbknn':
-        sc.external.pp.bbknn(adata, batch_key=batch_key, n_pcs=n_pcs)
-    elif args.integrate == 'harmony':
-        sc.external.pp.harmony_integrate(adata, batch_key)
-    elif args.integrate == 'scanorama':
-        sc.external.pp.scanorama_integrate(adata, batch_key)
-        
-    # find nearest neighbor graph constuction
-    pca_rep = 'X_pca'
-    if args.integrate == 'harmony':
-        pca_rep = 'X_pca_harmony'
-    elif args.integrate == 'scanorama':
-        pca_rep = 'X_scanorama'
-    if args.integrate != 'bbknn':
-        sc.pp.neighbors(
-            adata, 
-            n_neighbors=15, 
-            n_pcs=n_pcs,
-            knn=True, 
-            method='umap', 
-            metric='euclidean',
-            use_rep=pca_rep
+        covariate_kwargs = {}
+        if args.covar_cat:
+            covariate_kwargs["categorical_covariate_keys"] = args.covar_cat
+        if args.covar_con:
+            covariate_kwargs["continuous_covariate_keys"] = args.covar_con
+        # adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
+        scvi.model.SCVI.setup_anndata(
+            adata,
+            layer="counts",
+            batch_key=batch_key,
+            **covariate_kwargs
         )
-    sc.tl.umap(adata)
+        model = scvi.model.SCVI(adata)
+
+        train_kwargs = {}
+        if args.epochs is not None:
+            train_kwargs["max_epochs"] = args.epochs
+        if args.batch_size is not None:
+            train_kwargs["batch_size"] = args.batch_size
+        # if args.devices is not None:
+        #     train_kwargs["devices"] = args.devices
+        #     train_kwargs["strategy"] = "ddp_find_unused_parameters_true"
+        model.train(**train_kwargs)
+        
+        # if args.devices is not None:
+        # if not IS_MAIN_PROCESS: sys.exit(0)
+        # if IS_MAIN_PROCESS:
+        model.save(path_scvi_model, overwrite=True)
+        adata.obsm['X_scvi'] = model.get_latent_representation()
+        adata.layers['scvi_normalized'] = model.get_normalized_expression(library_size=1e4)
+        sc.pp.neighbors(adata, use_rep='X_scvi')
+        sc.tl.umap(adata)
+
+    else:
+        # Regress out effects of total counts per cell and the percentage of mitochondrial genes expressed
+        if args.regress:
+            if not(hasattr(adata.obs, 'total_counts') and hasattr(adata.obs, 'pct_counts_mt')):
+                adata.var['mt'] = adata.var_names.str.startswith('MT-')
+                sc.pp.calculate_qc_metrics(adata, qc_vars=["mt"], inplace=True, log1p=True)
+                # sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)    
+            sc.pp.regress_out(adata, ['total_counts', 'pct_counts_mt'])
+
+        # scale the expression to have zero mean and unit variance
+        if args.scale:
+            sc.pp.scale(adata, max_value=10)
+
+        # Dimensionality reduction
+        n_comps = min((min(adata.X[:, adata.var["highly_variable"].values].shape)-1), 50)
+        sc.tl.pca(
+            adata, 
+            n_comps=n_comps, 
+            chunked=False,
+            zero_center=False, 
+            svd_solver='arpack'
+        )
+
+        # perform data integration
+        n_pcs = adata.obsm['X_pca'].shape[1]
+        if args.integrate == 'bbknn':
+            sc.external.pp.bbknn(adata, batch_key=batch_key, n_pcs=n_pcs)
+        elif args.integrate == 'harmony':
+            sc.external.pp.harmony_integrate(adata, batch_key)
+        elif args.integrate == 'scanorama':
+            sc.external.pp.scanorama_integrate(adata, batch_key)
+            
+        # find nearest neighbor graph constuction
+        pca_rep = 'X_pca'
+        if args.integrate == 'harmony':
+            pca_rep = 'X_pca_harmony'
+        elif args.integrate == 'scanorama':
+            pca_rep = 'X_scanorama'
+        if args.integrate != 'bbknn':
+            sc.pp.neighbors(
+                adata, 
+                n_neighbors=15, 
+                n_pcs=n_pcs,
+                knn=True, 
+                method='umap', 
+                metric='euclidean',
+                use_rep=pca_rep
+            )
+        sc.tl.umap(adata)
+
 
     # perform clustering using Leiden graph-clustering method
     for res in args.resolutions:
@@ -218,6 +298,15 @@ def main(argv=None):
     # save the AnnData into a h5ad file 
     adata.write_h5ad(Path(path_clustering, 'adata_clustering.h5ad'))
 
+    if args.meta == 'auto':
+        # batch = 'group' if hasattr(adata.obs, 'group') else 'sample'
+        batch = 'sample'
+        if hasattr(adata.obs, 'group'):
+            batch = 'group'
+        elif hasattr(adata.obs, 'plate'):
+            batch = 'plate' 
+    else:
+        batch = args.meta
     
     # sc.tl.leiden(adata, flavor="igraph", n_iterations=2, resolution=args.resolution)
     for sid in sorted(adata.obs[batch].unique()):
@@ -244,7 +333,7 @@ def main(argv=None):
         n_cluster = len(adata.obs[f'leiden_res_{res:4.2f}'].unique())+1
         ncol = min((n_cluster//20 + min(n_cluster%20, 1)), 3)
         with plt.rc_context():
-            prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'],adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True)
+            prop = pd.crosstab(adata.obs[f'leiden_res_{res:4.2f}'], adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True)
             prop.legend(bbox_to_anchor=(1+(args.fontsize-10)/50+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
             plt.savefig(Path(path_res, f"prop_leiden_res_{res:4.2f}.png"), bbox_inches="tight")
             if args.pdf:
@@ -262,6 +351,11 @@ def main(argv=None):
         if args.regress: params.update({"--regress": args.regress})
         if args.scale: params.update({"--scale": args.scale})
         if args.keep_doublets: params.update({"--keep_doublets": args.keep_doublets})
+        if args.covar_cat: params.update({"--covar_cat": args.covar_cat})
+        if args.covar_con: params.update({"--covar_con": args.covar_con})
+        if args.epochs: params.update({"--epochs": args.epochs})
+        if args.batch_size: params.update({"--batch_size": args.batch_size})
+        # if args.devices: params.update({"--devices": args.devices})
         json.dump(params, file, indent=4)
 
 
