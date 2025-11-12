@@ -59,13 +59,13 @@ def parse_args(argv=None):
         metavar="REF_H5AD",
         type=Path,
         help="Input reference anndata data file.",
-        required=True,
+        # required=True,
     )
     parser.add_argument(
-        "--model_file",
+        "--model_path",
         metavar="MODELFILE",
         type=Path,
-        help="Path to scANVI model file.",
+        help="Path to scANVI model files.",
     )
     # parser.add_argument(
     #     "--model_cls",
@@ -147,8 +147,8 @@ def main(argv=None):
         logger.error(f"The given input file {args.h5ad} was not found!")
         sys.exit(2)
 
-    if args.model_file and not args.model_file.is_file():
-        logger.error(f"The given input file {args.model_file} was not found!")
+    if args.model_path and not args.model_path.is_dir():
+        logger.error(f"The given input file {args.model_path} was not found!")
         sys.exit(2)
 
     plt.rcParams.update({
@@ -250,7 +250,14 @@ def main(argv=None):
 
         # scanvi_ref.save(Path(path_annotation, 'scanvi_model'), overwrite=True)
     else:
-        scanvi_ref = args.model_file
+        scanvi_ref = scvi.model.SCANVI.load(args.model_path)
+        batch_key = scanvi_ref.registry.get('setup_args').get('batch_key')
+        if batch_key:
+            if batch_key not in adata.obs.columns:
+                adata.obs[batch_key] = adata.obs[args.batch_key].copy()
+        else:
+            logger.error(f"Can't find 'batch_key' in the model!")
+            sys.exit(2)           
 
     # transfer learning on query
     scvi.model.SCANVI.prepare_query_anndata(adata, scanvi_ref)
@@ -298,18 +305,17 @@ def main(argv=None):
             # )
 
             ax = sc.pl.umap(adata_s, color=label_type, show=False)
+            ax.set_aspect("equal", adjustable="box")
             fig = ax.figure
-            fig.canvas.draw()
             leg = ax.legend_
             if leg is not None:
                 bbox = leg.get_window_extent()
                 width_px = bbox.width
                 if width_px > 500:
                     leg.remove()
-                    ax.legend(bbox_to_anchor=(0.5, -0.2), loc="upper center", ncol=min(ncol+1, 6))
-                fig.tight_layout()
+                    ax.legend(bbox_to_anchor=(0.5, -0.15), loc="upper center", ncol=min(ncol+1, 6))
 
-            plt.savefig(Path(path_annotation_s, f"umap_cell_type.png"), bbox_inches="tight")    
+            plt.savefig(Path(path_annotation_s, f"umap_cell_type.png"), bbox_inches="tight", dpi=150)    
             if args.pdf:
                 plt.savefig(Path(path_annotation_s, f"umap_cell_type.pdf"), bbox_inches="tight")    
 
@@ -330,21 +336,28 @@ def main(argv=None):
     n_cluster = len(adata.obs[label_type].unique())+1
     ncol = min((n_cluster//20 + min(n_cluster%20, 1)), 3)
     with plt.rc_context():
-        prop = pd.crosstab(adata.obs[label_type], adata.obs[batch], normalize='columns').T.plot(kind='bar', stacked=True, color=adata.uns[f"{label_type}_colors"])
+        ax = pd.crosstab(
+            adata.obs[label_type], 
+            adata.obs[batch], 
+            normalize='columns').T.plot(kind='bar', stacked=True, color=adata.uns[f"{label_type}_colors"])
         # prop.legend(bbox_to_anchor=(1.4+(args.fontsize-10)/50+ncol*0.17, 1.02), loc='upper right', ncol=ncol)
 
-        leg = plt.legend(
-            bbox_to_anchor=(1.4 + (args.fontsize - 10) / 50 + ncol * 0.17, 1.02),
-            loc="upper right",
+        # leg = plt.legend(
+        #     bbox_to_anchor=(1.4 + (args.fontsize - 10) / 50 + ncol * 0.17, 1.02),
+        #     loc="upper right",
+        #     ncol=ncol,
+        # )
+        leg = ax.legend(
+            loc="upper left",
+            bbox_to_anchor=(1.05, 1.0),   # just outside the axes
+            borderaxespad=0,
             ncol=ncol,
         )
-        plt.gcf().canvas.draw()
         bbox = leg.get_window_extent()
         width = bbox.width
         if width > 500:
             leg.remove()
             plt.legend(bbox_to_anchor=(0.5, -0.4), loc="upper center", ncol=min(ncol+1, 6))
-        plt.gcf().tight_layout()
 
         plt.savefig(Path(path_annotation, f"prop_{label_type}.png"), bbox_inches="tight")    
         if args.pdf:
@@ -356,8 +369,8 @@ def main(argv=None):
         params = {}
         params.update({"--h5ad": str(args.h5ad)})        
         if args.h5ad_ref: params.update({"--h5ad_ref": str(args.h5ad_ref)})        
-        if args.model_file: 
-            params.update({"--model_file": str(args.model_file)})
+        if args.model_path: 
+            params.update({"--model_path": str(args.model_path)})
         params.update({"--batch_key": str(args.batch_key)}) 
         params.update({"--label_key": str(args.label_key)}) 
         params.update({"--n_top_genes": str(args.n_top_genes)}) 

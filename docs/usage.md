@@ -236,6 +236,7 @@ Users can set the options for cell-type annotation analysis with scvi-tools in t
 | Options   | Description |
 | ----------- | ----------- |
 | --h5ad_ref  \<path> | Specify a reference anndata data file to generate scANVI model for annotation. |
+| --model_path  \<path> | Specify a directory containing scANVI model file and corresponding reference anndata file. |
 | --batch_key  \<string> | Specify a batch key for modelling reference data with scVI model. (default='sample')|
 | --label_key  \<string> | Specify a label key of cell types for reference data. (default=None)|
 | --n_top_genes  \<int> | Specify the number of highly-variable genes to keep. (default=2000)|
