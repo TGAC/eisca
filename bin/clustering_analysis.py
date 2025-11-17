@@ -14,11 +14,12 @@ import argparse
 import sys, json
 from pathlib import Path
 import util
-import torch
-import scvi
+# import torch
+# import scvi
 
 
 logger = util.get_named_logger('CLUSTERING')
+
 
 
 # import torch.distributed as dist
@@ -202,6 +203,8 @@ def main(argv=None):
 
 
     if args.integrate == 'scvi':
+        import torch # only if cpu support AVX instructions
+        import scvi 
         torch.set_float32_matmul_precision("high")
 
         covariate_kwargs = {}

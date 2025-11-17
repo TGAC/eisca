@@ -22,7 +22,7 @@
                     },
                     "kallistobustools/count": {
                         "branch": "master",
-                        "git_sha": "53c2b466994f07def210b7f4cc866bb5a8a2cb92",
+                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
                         "installed_by": ["modules"]
                     },
                     "kallistobustools/ref": {
@@ -42,7 +42,7 @@
                     },
                     "trimgalore": {
                         "branch": "master",
-                        "git_sha": "8c5eeedd45e295fc9a4f164631da6a8b37e6b9c6",
+                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
                         "installed_by": ["modules"]
                     }
                 }
