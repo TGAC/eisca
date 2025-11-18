@@ -1,0 +1,55 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+    profile "test,docker"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                // define parameters here. Example: 
+                // outdir = "tests/results"
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                {assert workflow.trace.tasks().size() == 17},
+                { assert new File("$outputDir/fastqc/Sample_X_1_fastqc.html").exists() },
+                { assert new File("$outputDir/fastqc/Sample_X_2_fastqc.html").exists() },
+                { assert new File("$outputDir/fastqc/Sample_Y_1_fastqc.html").exists() },
+                { assert new File("$outputDir/fastqc/Sample_Y_2_fastqc.html").exists() },
+                { assert new File("$outputDir/fastqc/Sample_Y_3_fastqc.html").exists() },
+                { assert new File("$outputDir/fastqc/Sample_Y_4_fastqc.html").exists() },
+
+                { assert new File("$outputDir/alevin/mtx_conversions/combined_raw_matrix.h5ad").exists() },
+                { assert new File("$outputDir/alevin/mtx_conversions/Sample_X/Sample_X_raw_matrix.h5ad").exists() },
+                { assert new File("$outputDir/alevin/mtx_conversions/Sample_X/Sample_X_raw_matrix.rds").exists() },
+                { assert new File("$outputDir/alevin/mtx_conversions/Sample_Y/Sample_Y_raw_matrix.h5ad").exists() },
+                { assert new File("$outputDir/alevin/mtx_conversions/Sample_Y/Sample_Y_raw_matrix.rds").exists() },
+
+                { assert new File("$outputDir/qc_cell_filter/adata_filtered_normalized.h5ad").exists() },
+                { assert new File("$outputDir/qc_cell_filter/sample_summary.csv").exists() },
+                { assert new File("$outputDir/qc_cell_filter/parameters.json").exists() },
+                { assert new File("$outputDir/qc_cell_filter/raw_counts/sample_Sample_X/scatter_total_counts_genes.png").exists() },
+                { assert new File("$outputDir/qc_cell_filter/raw_counts/sample_Sample_X/knee_plot.png").exists() },
+                { assert new File("$outputDir/qc_cell_filter/cell_filtering/sample_Sample_X/violin0_n_genes_by_counts.png").exists() },
+                { assert new File("$outputDir/qc_cell_filter/cell_filtering/sample_Sample_X/violin1_total_counts.png").exists() },
+
+                { assert new File("$outputDir/clustering/adata_clustering.h5ad").exists() },
+                { assert new File("$outputDir/clustering/parameters.json").exists() },
+                { assert new File("$outputDir/clustering/group_Control/umap_leiden_res_0.02.png").exists() },
+                { assert new File("$outputDir/clustering/group_Control/umap_leiden_res_0.50.png").exists() },
+                { assert new File("$outputDir/clustering/resolution_0.50/prop_leiden_res_0.50.png").exists() },
+
+                { assert new File("$outputDir/multiqc/multiqc_report.html").exists() },
+                { assert new File("$outputDir/report/eisca_report.html").exists() }
+            )
+        }
+
+    }
+
+}

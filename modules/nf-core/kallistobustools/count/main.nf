@@ -30,7 +30,6 @@ process KALLISTOBUSTOOLS_COUNT {
     def cdna    = t1c ? "-c1 $t1c" : ''
     def intron  = t2c ? "-c2 $t2c" : ''
     def memory  = task.memory.toGiga() - 1
-    def parity  = params.parity ?: ''
     """
     kb \\
         count \\
@@ -44,7 +43,6 @@ process KALLISTOBUSTOOLS_COUNT {
         $args \\
         -o ${prefix}.count \\
         -m ${memory}G \\
-        --parity $parity \\
         ${reads.join( " " )}
 
     cat <<-END_VERSIONS > versions.yml
