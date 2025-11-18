@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 import argparse
 import sys, json
 from pathlib import Path
+import numpy as np
 import util
 # import torch
 # import scvi
@@ -161,8 +162,6 @@ def main(argv=None):
     util.check_and_create_folder(args.outdir)
     path_clustering = Path(args.outdir)
     util.check_and_create_folder(path_clustering)
-    path_scvi_model = Path(path_clustering, "scvi_model")
-    util.check_and_create_folder(path_scvi_model)
 
     adata = sc.read_h5ad(args.h5ad)
 
@@ -204,7 +203,9 @@ def main(argv=None):
 
     if args.integrate == 'scvi':
         import torch # only if cpu support AVX instructions
-        import scvi 
+        import scvi
+        path_scvi_model = Path(path_clustering, "scvi_model")
+        util.check_and_create_folder(path_scvi_model)
         torch.set_float32_matmul_precision("high")
 
         covariate_kwargs = {}
@@ -268,6 +269,10 @@ def main(argv=None):
         if args.integrate == 'bbknn':
             sc.external.pp.bbknn(adata, batch_key=batch_key, n_pcs=n_pcs)
         elif args.integrate == 'harmony':
+            mask = ~np.isnan(adata.obsm["X_pca"]).any(axis=1)
+            if not np.all(mask):
+                logger.warning(f"Removing {np.sum(~mask)} cells with NaN PCA embeddings before Harmony.")
+                adata = adata[mask].copy()
             sc.external.pp.harmony_integrate(adata, batch_key)
         elif args.integrate == 'scanorama':
             sc.external.pp.scanorama_integrate(adata, batch_key)
