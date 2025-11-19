@@ -3,6 +3,15 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.5 - [2025-11-19]
+- add the scvi integration method to the clustering module using scvi-tools
+- add a new module annotation_scvi for cell-type prediction using scvi-tools
+- add a new module dea_scvi for differential expression analysis using scvi-tools
+
+## v2.0 - [2025-07-01]
+- add cell-cell communication analysis with tool cellchat
+- allow genearting PDF figures
+
 ## v1.8 - [2024-12-11]
 - add support for smart-seq2 data analysis
 
