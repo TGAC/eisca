@@ -16,12 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add support for smart-seq2 data analysis
 
 ## v1.6 - [2024-11-05]
-- add following tertiary analysis: Differential expression analysis
+- add tertiary analysis: Differential expression analysis
 - fix plot size issue in report
 
 
 ## v1.4 - [2024-10-22]
-- add following tertiary analysis: Cell type annotation
+- add tertiary analysis: Cell type annotation
 - add 'analysis parameters' for analysis sections in report 
 
 ## v1.1 - [2024-10-04]

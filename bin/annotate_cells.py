@@ -169,8 +169,8 @@ def main(argv=None):
             # )
 
             ax = sc.pl.umap(adata_s, color=label_type, show=False)
+            ax.set_aspect("equal", adjustable="box")
             fig = ax.figure
-            fig.canvas.draw()
             leg = ax.legend_
             if leg is not None:
                 bbox = leg.get_window_extent()

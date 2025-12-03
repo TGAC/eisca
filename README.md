@@ -19,8 +19,11 @@
 
 ## Introduction
 
-**TGAC/eisca** is a bioinformatics pipeline that perform analysis for single-cell RNA-seq data. The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes (implemented and to be implemented) are as follows:
+**TGAC/eisca** is a bioinformatics pipeline that perform analysis for single-cell RNA-seq data. The pipeline is built using [Nextflow](https://www.nextflow.io/). The pipeline was developed as a generalized, flexible, and scalable workflow for scRNA-seq analysis. It is primarily designed for droplet-based (10x) and plate-based (Smart-seq2) data. The pipeline can be applied from multiple starting points, either from raw FASTQ data or single-cell AnnData for the specified analysis phase.
 
+![nf-core/eisca metro map](docs/images/eisca_pipeline_graph.png)
+
+The modules of the pipeline are listed as follows:
 - **Primary analysis**
   - FastQC - Raw read QC
   - TrimGalore - Adapter and quality trimming to FastQ files

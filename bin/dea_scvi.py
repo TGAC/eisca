@@ -289,7 +289,7 @@ def main(argv=None):
 
                 de_df.to_csv(
                     Path(path_analysis_s, f'dea_csvi_{celltype}.csv'), 
-                    index=False,
+                    index=True,
                 )
 
                 # marker genes doplot
@@ -357,13 +357,13 @@ def main(argv=None):
             # for comp in de_df['comparison'].unique():
             #     de_df[de_df['comparison']==comp].to_csv(
             #         Path(path_analysis, f'dea_{comp}.csv'), 
-            #         index=False,
+            #         index=True,
             #     )
 
             # write all dea comparisons into one csv file
             de_df.to_csv(
                 Path(path_analysis, f'dea_csvi.csv'), 
-                index=False,
+                index=True,
             )
 
             # marker genes doplot
@@ -431,7 +431,7 @@ def main(argv=None):
 
             de_df.to_csv(
                 Path(path_analysis_s, f'dea_csvi_{sid}.csv'), 
-                index=False,
+                index=True,
             )
 
             # marker genes doplot
