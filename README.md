@@ -30,6 +30,8 @@ The modules of the pipeline are listed as follows:
   - Kallisto & Bustools - Mapping & quantification by Kallisto & Bustools
   - Salmon Alevin - Mapping & quantification by Salmon Alevin
   - STARsolo - Mapping & quantification by STAR
+  - MTX conversion - Converting count matrixes into Anndata objects
+  - CONCAT counts - Concatenating input Anndata objects into one Anndata object
 - **Secondary analysis**
   - QC & cell filtering - cell filtering and QC on raw data and filtered data
   - Clustering analysis - single-cell clustering analysis
